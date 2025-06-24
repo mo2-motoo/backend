@@ -1,5 +1,7 @@
-package com.hsu_mafia.motoo.api.word;
+package com.hsu_mafia.motoo.api.word.service;
 
+import com.hsu_mafia.motoo.api.word.entity.WordEntity;
+import com.hsu_mafia.motoo.api.word.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;

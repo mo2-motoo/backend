@@ -1,4 +1,4 @@
-package com.hsu_mafia.motoo.api.word;
+package com.hsu_mafia.motoo.api.word.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
