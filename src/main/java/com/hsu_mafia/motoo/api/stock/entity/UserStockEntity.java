@@ -1,24 +1,29 @@
 package com.hsu_mafia.motoo.api.stock.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.hsu_mafia.motoo.api.user.entity.UserEntity;
+import com.hsu_mafia.motoo.global.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "user_stock")
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
-public class UserStockEntity {
+@Builder
+public class UserStockEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-    private String stockId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_id")
+    private StockEntity stock;
+
     private Integer hold;
     private Integer bankruptcyNo;
     private Integer averagePrice;

@@ -1,25 +1,30 @@
 package com.hsu_mafia.motoo.api.stock.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.hsu_mafia.motoo.api.user.entity.UserEntity;
+import com.hsu_mafia.motoo.global.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "execution")
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
-public class ExecutionEntity {
+@Builder
+public class ExecutionEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String stockId;
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_id")
+    private StockEntity stock;
+
     private Long price;
     private Integer amount;
     private Boolean isBought;
