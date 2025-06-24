@@ -11,8 +11,24 @@ services:
       POSTGRES_USER: sa
       POSTGRES_PASSWORD: 1234
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - backend
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
 
 volumes:
-  pgdata:
+  postgres_data:
+  redis_data:
+
+networks:
+  backend:
+    name: backend
