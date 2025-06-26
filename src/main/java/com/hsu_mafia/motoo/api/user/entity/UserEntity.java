@@ -43,4 +43,9 @@ public class UserEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BankruptcyEntity> bankruptcies = new ArrayList<>();
+
+    public void resetAfterBankruptcy() {
+        this.cash = this.seedMoney;
+        this.bankruptcyNo = this.bankruptcyNo + 1;
+    }
 }
