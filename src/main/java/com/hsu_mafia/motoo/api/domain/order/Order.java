@@ -5,13 +5,18 @@ import com.hsu_mafia.motoo.api.domain.stock.Stock;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,4 +46,8 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
     private OrderStatus status; // PENDING / COMPLETED / CANCELLED
+
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
+    }
 } 
