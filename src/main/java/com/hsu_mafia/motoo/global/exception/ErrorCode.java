@@ -1,32 +1,32 @@
 package com.hsu_mafia.motoo.global.exception;
 
-import org.springframework.http.HttpStatus;
-
 public enum ErrorCode {
-
-    /**
-     * 비즈니스 에러 (확인 가능한 예외 상황)
-     */
-    /* 400 BAD_REQUEST : 잘못된 요청 */
-    /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
-    /* 404 NOT_FOUND : Resource를 찾을 수 없음 */
-    /* 409 : CONFLICT : Resource의 현재 상태와 충돌. 보통 중복된 데이터 존재 */
-
-    UNEXPECTED_ERROR(HttpStatus.BAD_REQUEST, "0"),
-    KIS_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "881"),
-    KIS_API_CALL_DENIED(HttpStatus.NOT_FOUND, "882"),
-    KIS_API_CALL_TOO_MANY(HttpStatus.INTERNAL_SERVER_ERROR, "883"),
-    MAPPING_PROBLEM(HttpStatus.CONFLICT, "993"),
-    ;
-
-    private final HttpStatus httpStatus;
+    // 사용자 관련
+    USER_NOT_FOUND("사용자를 찾을 수 없습니다."),
+    
+    // 주식 관련
+    STOCK_NOT_FOUND("주식을 찾을 수 없습니다."),
+    
+    // 주문 관련
+    ORDER_NOT_FOUND("주문을 찾을 수 없습니다."),
+    ORDER_ACCESS_DENIED("주문에 대한 접근 권한이 없습니다."),
+    ORDER_CANNOT_CANCEL("취소할 수 없는 주문입니다."),
+    
+    // 자금 관련
+    INSUFFICIENT_CASH("보유 현금이 부족합니다."),
+    INSUFFICIENT_STOCK("보유 주식이 부족합니다."),
+    
+    // 일반
+    INVALID_REQUEST("잘못된 요청입니다."),
+    INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),
+    MAPPING_PROBLEM("매핑 과정에서 문제가 발생했습니다.");
+    
     private final String message;
-
-    ErrorCode(HttpStatus httpStatus, String message) {
-        this.httpStatus = httpStatus;
+    
+    ErrorCode(String message) {
         this.message = message;
     }
-
+    
     public String getMessage() {
         return message;
     }
