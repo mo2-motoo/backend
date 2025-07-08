@@ -3,7 +3,7 @@ version: "3.8"
 services:
   db:
     image: postgres:15
-    container_name: postgres_db
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -12,18 +12,74 @@ services:
       POSTGRES_PASSWORD: 1234
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+      - ./logs/postgres:/var/log/postgresql   # 로그 마운트
     networks:
       - backend
+    command:
+      - postgres
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_directory=/var/log/postgresql"
+      - "-c"
+      - "log_filename=postgresql.log"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_min_duration_statement=1000"
+      - "-c"
+      - "log_connections=on"
+      - "-c"
+      - "log_disconnections=on"
 
   redis:
     image: redis:7
     container_name: redis
     restart: always
+    command:
+      [
+        "redis-server",
+        "--slowlog-log-slower-than", "1000",
+        "--slowlog-max-len", "256",
+        "--logfile", "/var/log/redis/redis-server.log"
+      ]
     volumes:
       - redis_data:/data
+      - ./logs/redis:/var/log/redis            # 로그 마운트
     networks:
       - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  agent:
+    build:
+      context: .
+      dockerfile: newrelic-infra.dockerfile
+    container_name: newrelic_infra
+    privileged: true
+    networks:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./newrelic-infra/Integrations.d:/etc/newrelic-infra/integrations.d
+      - ./logs/postgres:/var/log/postgresql       # 로그 읽기
+      - ./logs/redis:/var/log/redis               # 로그 읽기
 
 volumes:
   postgres_data:
