@@ -18,19 +18,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.hsu_mafia.motoo.global.config.KisConfig;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/mock-orders")
 public class MockOrderController {
 
+    private final KisConfig kisConfig;
+
     @PostMapping
     public ResponseEntity<?> createMockOrders() {
         try {
-            // 실제로는 환경변수나 설정파일에서 관리해야 함
-            String APP_KEY = "";
-            String APP_SECRET = "";
-            String BASE_URL = "https://openapi.koreainvestment.com:9443";
+            // KisConfig에서 환경변수 가져오기
+            String APP_KEY = kisConfig.getAppKey();
+            String APP_SECRET = kisConfig.getAppSecret();
+            String BASE_URL = kisConfig.getBaseUrl();
 
             // 1. Access Token 발급
             HttpClient client = HttpClient.newHttpClient();
