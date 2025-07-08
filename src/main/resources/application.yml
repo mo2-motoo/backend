@@ -26,7 +26,7 @@ spring:
       host: redis
       port: 6379
 
-ks:
+kis:
   app-key: ${KS_APP_KEY}
   app-secret: ${KS_APP_SECRET}
   account-number: ${KS_ACCOUNT_NUMBER}
