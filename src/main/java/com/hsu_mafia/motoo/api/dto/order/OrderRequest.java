@@ -15,4 +15,9 @@ public class OrderRequest {
     private OrderType orderType;
     private Long quantity;
     private Long price;
-} 
+    private Boolean marketOrder;
+
+    public boolean isMarketOrder() {
+        return marketOrder != null && marketOrder;
+    }
+}

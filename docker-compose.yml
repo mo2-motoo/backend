@@ -49,37 +49,37 @@ services:
     networks:
       - backend
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: backend
-    depends_on:
-      - db
-      - redis
-    ports:
-      - "8080:8080"
-    networks:
-      - backend
-    restart: unless-stopped
-    env_file:
-      - .env
-
-  agent:
-    build:
-      context: .
-      dockerfile: newrelic-infra.dockerfile
-    container_name: newrelic_infra
-    privileged: true
-    networks:
-      - backend
-    restart: unless-stopped
-    volumes:
-      - /:/host:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./newrelic-infra/Integrations.d:/etc/newrelic-infra/integrations.d
-      - ./logs/postgres:/var/log/postgresql       # 로그 읽기
-      - ./logs/redis:/var/log/redis               # 로그 읽기
+#  backend:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: backend
+#    depends_on:
+#      - db
+#      - redis
+#    ports:
+#      - "8080:8080"
+#    networks:
+#      - backend
+#    restart: unless-stopped
+#    env_file:
+#      - .env
+#
+#  agent:
+#    build:
+#      context: .
+#      dockerfile: newrelic-infra.dockerfile
+#    container_name: newrelic_infra
+#    privileged: true
+#    networks:
+#      - backend
+#    restart: unless-stopped
+#    volumes:
+#      - /:/host:ro
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - ./newrelic-infra/Integrations.d:/etc/newrelic-infra/integrations.d
+#      - ./logs/postgres:/var/log/postgresql       # 로그 읽기
+#      - ./logs/redis:/var/log/redis               # 로그 읽기
 
 volumes:
   postgres_data:
