@@ -7,7 +7,7 @@ spring:
     name: session
 
   datasource:
-    url: jdbc:postgresql://db:5432/database
+    url: jdbc:postgresql://localhost:5432/database
     username: sa
     password: 1234
     driver-class-name: org.postgresql.Driver
@@ -26,7 +26,7 @@ spring:
       host: redis
       port: 6379
 
-ks:
+kis:
   app-key: ${KS_APP_KEY}
   app-secret: ${KS_APP_SECRET}
   account-number: ${KS_ACCOUNT_NUMBER}
