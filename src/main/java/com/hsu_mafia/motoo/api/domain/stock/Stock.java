@@ -24,7 +24,7 @@ public class Stock extends BaseEntity {
     private Long currentPrice;
 
     @Column(length = 20)
-    private String marketType; // 예: KOSPI, KOSDAQ 등
+    private String marketType; // 예: KOSPI, NASDAQ 등
 
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)
