@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  # Loki - 로그 저장소
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/config.yml
+    networks:
+      - logging-network
+    restart: unless-stopped
+
+  # Promtail - 로그 수집기
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml
+      - ./logs:/logs:ro # 로그 파일이 있는 디렉토리를 읽기 전용으로 마운트
+      - /var/log:/var/log:ro # 시스템 로그도 수집하고 싶다면 추가
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - logging-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Grafana - 시각화 대시보드
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # 기본 관리자 비밀번호
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - logging-network
+      - monitoring-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  logging-network:
+    name: logging-network
+    external: true
+  monitoring-network:
+    name: monitoring-network
+    external: true
