@@ -1,5 +1,4 @@
 spring:
-
   config:
     import: optional:file:.env[.properties]
 
@@ -7,7 +6,7 @@ spring:
     name: session
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/database
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/database}
     username: sa
     password: 1234
     driver-class-name: org.postgresql.Driver
@@ -22,9 +21,58 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-    redis:
-      host: redis
-      port: 6379
+  redis:
+    host: redis
+    port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,env,configprops
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active:default}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        jvm.memory.used: true
+        process.cpu.usage: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+        jvm.memory.used: 0.5,0.95,0.99
+        process.cpu.usage: 0.5,0.95,0.99
+
+# Logging configuration for APM
+logging:
+  level:
+    root: INFO
+    com.hsu_mafia.motoo: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Custom metrics for APM
+management.metrics.enable:
+  jvm: true
+  process: true
+  system: true
+  http: true
+  tomcat: true
+  hikaricp: true
 
 kis:
   app-key: ${KS_APP_KEY}
