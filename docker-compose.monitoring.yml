@@ -68,18 +68,15 @@ services:
     ports:
       - "6565:6565"
     entrypoint: [""]
-    command:
-      [
-        "k6",
-        "run",
-        "--out",
-        "prometheus=remoteWriteUrl=http://prometheus:9090/api/v1/write",
-        "/scripts/load-test.js",
-      ]
+    command: ["tail", "-f", "/dev/null"] # 컨테이너를 계속 실행 상태로 유지
     volumes:
       - ./k6-scripts:/scripts
     networks:
       - monitoring-network
+    depends_on:
+      - prometheus
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
 
   node-exporter:
     image: prom/node-exporter
