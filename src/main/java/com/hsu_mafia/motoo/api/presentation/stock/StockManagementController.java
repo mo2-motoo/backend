@@ -165,4 +165,24 @@ public class StockManagementController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.success("E2E 테스트가 성공적으로 완료되었습니다."));
     }
+
+    /**
+     * KOSPI 1분봉 데이터 수집 수동 실행
+     */
+    @PostMapping("/data-collection/kospi/minute")
+    @Operation(summary = "KOSPI 1분봉 데이터 수집", description = "KOSPI 종목들의 1분봉 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectKospiMinuteData() {
+        stockSchedulerService.manualCollectKospiMinuteData();
+        return ResponseEntity.ok(CommonResponse.success());
+    }
+    
+    /**
+     * NASDAQ 1분봉 데이터 수집 수동 실행
+     */
+    @PostMapping("/data-collection/nasdaq/minute")
+    @Operation(summary = "NASDAQ 1분봉 데이터 수집", description = "NASDAQ 종목들의 1분봉 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectNasdaqMinuteData() {
+        stockSchedulerService.manualCollectNasdaqMinuteData();
+        return ResponseEntity.ok(CommonResponse.success());
+    }
 } 
