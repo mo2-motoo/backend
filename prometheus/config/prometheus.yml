@@ -5,6 +5,9 @@ global:
   external_labels:
     monitor: 'docker-host-alpha'
 
+remote_write:
+  - url: "http://localhost:9090/api/v1/write"
+
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
