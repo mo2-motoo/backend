@@ -67,6 +67,20 @@ public class StockApiService {
     }
 
     /**
+     * 분기별 재무제표 데이터를 가져옵니다.
+     */
+    public JsonNode getQuarterlyFinancialData(String stockCode) {
+        return callKisApiWithTokenRetry(() -> fetchQuarterlyFinancialData(stockCode));
+    }
+
+    /**
+     * 연간 재무제표 데이터를 가져옵니다.
+     */
+    public JsonNode getAnnualFinancialData(String stockCode) {
+        return callKisApiWithTokenRetry(() -> fetchAnnualFinancialData(stockCode));
+    }
+
+    /**
      * 한국투자증권 API 호출 시 토큰 만료 오류 처리를 위한 공통 메서드
      */
     private JsonNode callKisApiWithTokenRetry(ApiCall apiCall) {
@@ -290,6 +304,70 @@ public class StockApiService {
         } catch (Exception e) {
             throw new StockApiException("응답 데이터 파싱에 실패했습니다: " + e.getMessage());
         }
+    }
+
+    /**
+     * 분기별 재무제표 데이터를 가져오는 메서드
+     */
+    private JsonNode fetchQuarterlyFinancialData(String stockCode) {
+        String accessToken = tokenService.getValidAccessToken();
+        String appkey = kisConfig.getAppKey();
+        String appsecret = kisConfig.getAppSecret();
+
+        HttpHeaders headers = createHeaders(accessToken, appkey, appsecret, ApiConstants.TR_ID_FINANCIAL_QUARTERLY);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = UriComponentsBuilder
+                .fromHttpUrl(ApiConstants.KIS_FINANCIAL_QUARTERLY_URL)
+                .queryParam("FID_COND_MRKT_DIV_CODE", "J")
+                .queryParam("FID_INPUT_ISCD", stockCode)
+                .queryParam("FID_INPUT_PRICE_1", "")
+                .queryParam("FID_INPUT_PRICE_2", "")
+                .queryParam("FID_VOL_CNT", "")
+                .queryParam("FID_INPUT_DATE_1", "")
+                .toUriString();
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        return parseResponse(response.getBody());
+    }
+
+    /**
+     * 연간 재무제표 데이터를 가져오는 메서드
+     */
+    private JsonNode fetchAnnualFinancialData(String stockCode) {
+        String accessToken = tokenService.getValidAccessToken();
+        String appkey = kisConfig.getAppKey();
+        String appsecret = kisConfig.getAppSecret();
+
+        HttpHeaders headers = createHeaders(accessToken, appkey, appsecret, ApiConstants.TR_ID_FINANCIAL_ANNUAL);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = UriComponentsBuilder
+                .fromHttpUrl(ApiConstants.KIS_FINANCIAL_ANNUAL_URL)
+                .queryParam("FID_COND_MRKT_DIV_CODE", "J")
+                .queryParam("FID_INPUT_ISCD", stockCode)
+                .queryParam("FID_INPUT_PRICE_1", "")
+                .queryParam("FID_INPUT_PRICE_2", "")
+                .queryParam("FID_VOL_CNT", "")
+                .queryParam("FID_INPUT_DATE_1", "")
+                .toUriString();
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        return parseResponse(response.getBody());
     }
 
     /**
