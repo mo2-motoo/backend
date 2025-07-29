@@ -24,10 +24,7 @@ public class UserController {
     private final PriceUtil priceUtil;
 
     @GetMapping("/profile")
-    @Operation(
-        summary = "사용자 프로필 조회",
-        description = "사용자의 기본 정보, 자산, 가입일 등 프로필 정보를 조회합니다."
-    )
+    @Operation(summary = "사용자 프로필 조회", description = "사용자의 기본 정보, 자산, 가입일 등 프로필 정보를 조회합니다.")
     public ResponseEntity<CommonResponse<UserResponse>> getProfile() {
         Long userId = 1L; // TODO: 실제 인증된 사용자 ID로 변경
         User user = userService.getProfile(userId);

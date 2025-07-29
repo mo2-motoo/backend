@@ -30,11 +30,11 @@ public class StockController {
 
     @GetMapping
     @Operation(summary = "주식 목록 조회", description = "모든 주식 목록을 조회합니다.")
-    public ResponseEntity<CommonResponse<List<StockResponse>>> getStocks(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<CommonResponse<List<StockResponse>>> getStocks(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Long userId = 1L;
+
         Pageable pageable = PageRequest.of(page, size);
+
         List<Stock> stocks = stockService.getStocks(userId, pageable);
         
         // PriceUtil을 통해 현재가 정보를 포함한 StockResponse 리스트 생성
@@ -50,6 +50,7 @@ public class StockController {
     @Operation(summary = "주식 상세 조회", description = "특정 주식의 상세 정보를 조회합니다.")
     public ResponseEntity<CommonResponse<StockResponse>> getStock(@PathVariable String stockCode) {
         Long userId = 1L;
+
         Stock stock = stockService.getStock(userId, stockCode);
         StockResponse stockResponse = createStockResponseWithPriceInfo(stock);
         
@@ -59,12 +60,13 @@ public class StockController {
 
     @PostMapping("/search")
     @Operation(summary = "주식 검색", description = "조건에 따라 주식을 검색합니다.")
-    public ResponseEntity<CommonResponse<List<StockResponse>>> searchStocks(
-            @RequestBody StockSearchRequest request,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<CommonResponse<List<StockResponse>>> searchStocks(@RequestBody StockSearchRequest request,
+                                                                            @RequestParam(defaultValue = "0") int page,
+                                                                            @RequestParam(defaultValue = "20") int size) {
         Long userId = 1L;
+
         Pageable pageable = PageRequest.of(page, size);
+
         List<Stock> stocks = stockService.searchStocks(userId, request, pageable);
         
         // PriceUtil을 통해 현재가 정보를 포함한 StockResponse 리스트 생성

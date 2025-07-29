@@ -30,15 +30,16 @@ public class ExecutionController {
 
     @GetMapping
     @Operation(summary = "내 체결 내역 조회", description = "사용자의 체결 내역을 조회합니다.")
-    public ResponseEntity<CommonResponse<List<ExecutionDto>>> getExecutions(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<CommonResponse<List<ExecutionDto>>> getExecutions(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Long userId = 1L;
+
         Pageable pageable = PageRequest.of(page, size);
+
         List<Execution> executions = executionService.getExecutions(userId, pageable);
         List<ExecutionDto> executionDtos = executions.stream()
                 .map(executionMapper::toExecutionDto)
                 .collect(Collectors.toList());
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.success(executionDtos));
     }
