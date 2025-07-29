@@ -15,12 +15,14 @@ public interface FinancialStatementRepository extends JpaRepository<FinancialSta
     /**
      * 특정 종목의 최신 재무제표 조회
      */
-    Optional<FinancialStatement> findTopByStockOrderByReportDateDesc(String stockCode);
+    @Query("SELECT fs FROM FinancialStatement fs WHERE fs.stock.stockCode = :stockCode ORDER BY fs.reportDate DESC")
+    Optional<FinancialStatement> findTopByStockOrderByReportDateDesc(@Param("stockCode") String stockCode);
     
     /**
      * 특정 종목의 특정 날짜 이후 재무제표 조회
      */
-    List<FinancialStatement> findByStockOrderByReportDateDesc(String stockCode, LocalDate afterDate);
+    @Query("SELECT fs FROM FinancialStatement fs WHERE fs.stock.stockCode = :stockCode AND fs.reportDate >= :afterDate ORDER BY fs.reportDate DESC")
+    List<FinancialStatement> findByStockOrderByReportDateDesc(@Param("stockCode") String stockCode, @Param("afterDate") LocalDate afterDate);
     
     /**
      * 특정 종목의 특정 연도 재무제표 조회
@@ -43,7 +45,8 @@ public interface FinancialStatementRepository extends JpaRepository<FinancialSta
     /**
      * 특정 종목의 특정 날짜 재무제표 조회
      */
-    Optional<FinancialStatement> findByStockAndReportDate(String stockCode, LocalDate reportDate);
+    @Query("SELECT fs FROM FinancialStatement fs WHERE fs.stock.stockCode = :stockCode AND fs.reportDate = :reportDate")
+    Optional<FinancialStatement> findByStockAndReportDate(@Param("stockCode") String stockCode, @Param("reportDate") LocalDate reportDate);
     
     /**
      * 모든 종목의 최신 재무제표 조회
