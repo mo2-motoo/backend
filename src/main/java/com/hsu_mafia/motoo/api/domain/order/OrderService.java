@@ -1,5 +1,6 @@
 package com.hsu_mafia.motoo.api.domain.order;
 
+import com.hsu_mafia.motoo.api.domain.execution.OrderExecutionService;
 import com.hsu_mafia.motoo.api.domain.stock.Stock;
 import com.hsu_mafia.motoo.api.domain.stock.StockRepository;
 import com.hsu_mafia.motoo.api.domain.user.User;
@@ -28,6 +29,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
     private final UserStockRepository userStockRepository;
+    private final OrderExecutionService orderExecutionService;
 
     @Transactional
     public void placeOrder(Long userId, OrderRequest request) {
@@ -64,6 +66,9 @@ public class OrderService {
                 .build();
 
         orderRepository.save(order);
+        
+        // Redis Queue에 주문 추가
+        orderExecutionService.addOrderToQueue(order);
     }
 
     public List<Order> getOrders(Long userId, Pageable pageable) {

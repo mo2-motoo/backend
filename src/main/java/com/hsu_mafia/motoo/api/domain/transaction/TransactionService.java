@@ -42,6 +42,14 @@ public class TransactionService {
     }
     
     /**
+     * 거래내역을 저장합니다.
+     */
+    @Transactional
+    public void saveTransaction(TransactionHistory transaction) {
+        transactionRepository.save(transaction);
+    }
+    
+    /**
      * 거래내역 조회 기간이 6개월을 초과하는지 검증합니다.
      */
     private void validateDateRange(LocalDateTime start, LocalDateTime end) {
