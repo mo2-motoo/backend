@@ -3,6 +3,7 @@ package com.hsu_mafia.motoo.global.util;
 import com.hsu_mafia.motoo.global.common.CommonResponse;
 import com.hsu_mafia.motoo.global.exception.BaseException;
 import com.hsu_mafia.motoo.global.exception.ErrorCode;
+import com.hsu_mafia.motoo.global.exception.TransactionDateRangeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,13 @@ public class GlobalControllerAdvice {
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<CommonResponse<?>> onBaseException(BaseException e) {
         log.error("BaseException: codeName = {}, message = {}", e.getErrorCode().name(), e.getMessage());
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(CommonResponse.fail(e.getErrorCode()));
+    }
+
+    @ExceptionHandler(TransactionDateRangeException.class)
+    public ResponseEntity<CommonResponse<?>> onTransactionDateRangeException(TransactionDateRangeException e) {
+        log.warn("TransactionDateRangeException: {}", e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getStatus())
                 .body(CommonResponse.fail(e.getErrorCode()));
     }
