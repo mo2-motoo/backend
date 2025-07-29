@@ -10,7 +10,7 @@
 
 ### AOP란 무엇인가?
 
-**관점 지향 프로그래밍(Aspect-Oriented Programming, AOP)**은 횡단 관심사(cross-cutting concerns)를 분리하여 모듈화하는 프로그래밍 패러다임입니다.
+**관점 지향 프로그래밍(Aspect-Oriented Programming, AOP)** 은 횡단 관심사(cross-cutting concerns)를 분리하여 모듈화하는 프로그래밍 패러다임입니다.
 
 #### 횡단 관심사의 예시
 
