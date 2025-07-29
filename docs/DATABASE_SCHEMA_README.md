@@ -3,7 +3,7 @@
 ## 📊 Database Entity Relationship Diagram
 
 #### pdf url
-[ERD 다이어그램 보기](https://www.erdcloud.com/d/3d7b2f5c-0a1e-4f8b-9c6d-2f8b9c6d2f8b)
+[ERD 다이어그램 보기](https://github.com/mo2-motoo/backend/blob/main/docs/Motoo_ERD.pdf)
 
 <details>
 <summary>📋 ERD 다이어그램 보기/숨기기</summary>
