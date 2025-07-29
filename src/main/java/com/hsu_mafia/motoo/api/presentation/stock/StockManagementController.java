@@ -113,6 +113,28 @@ public class StockManagementController {
     }
     
     /**
+     * 재무제표 데이터 수집 수동 실행
+     */
+    @PostMapping("/data/collect/financial")
+    @Operation(summary = "재무제표 데이터 수집", description = "활성화된 모든 종목의 재무제표 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectFinancialData() {
+        stockSchedulerService.manualCollectFinancialData();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success());
+    }
+    
+    /**
+     * 특정 종목 재무제표 데이터 수집 수동 실행
+     */
+    @PostMapping("/data/collect/financial/{stockCode}")
+    @Operation(summary = "특정 종목 재무제표 데이터 수집", description = "특정 종목의 재무제표 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectFinancialDataForStock(@PathVariable String stockCode) {
+        stockSchedulerService.manualCollectFinancialDataForStock(stockCode);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success());
+    }
+    
+    /**
      * 종목 존재 여부 확인
      */
     @GetMapping("/stocks/{stockCode}/exists")
