@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 public interface TokenMapper {
     TokenMapper INSTANCE = Mappers.getMapper(TokenMapper.class);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "accessToken", source = "accessToken")
     @Mapping(target = "expiration", source = "accessTokenTokenExpired", qualifiedByName = "stringToLocalDateTime")
     Token toToken(TokenRes tokenRes);

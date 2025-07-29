@@ -10,7 +10,7 @@ public interface ExecutionMapper {
     ExecutionMapper INSTANCE = Mappers.getMapper(ExecutionMapper.class);
 
     @Mapping(target = "executionId", source = "id")
-    @Mapping(target = "stockId", source = "stock.id")
+    @Mapping(target = "stockId", source = "stock.stockCode")
     @Mapping(target = "stockName", source = "stock.stockName")
     ExecutionDto toExecutionDto(Execution execution);
 } 

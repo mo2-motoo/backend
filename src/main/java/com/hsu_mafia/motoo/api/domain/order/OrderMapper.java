@@ -10,7 +10,7 @@ public interface OrderMapper {
     OrderMapper INSTANCE = Mappers.getMapper(OrderMapper.class);
 
     @Mapping(target = "orderId", source = "id")
-    @Mapping(target = "stockId", source = "stock.id")
+    @Mapping(target = "stockId", source = "stock.stockCode")
     @Mapping(target = "stockName", source = "stock.stockName")
     OrderResponse toOrderResponse(Order order);
 } 

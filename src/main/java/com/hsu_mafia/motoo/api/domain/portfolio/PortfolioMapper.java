@@ -12,6 +12,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface PortfolioMapper {
     
+    @Mapping(source = "id", target = "userId")
     @Mapping(source = "stocks", target = "stocks")
     @Mapping(target = "totalStockValue", ignore = true)
     @Mapping(target = "totalValue", ignore = true)
@@ -28,6 +29,7 @@ public interface PortfolioMapper {
     
     List<PortfolioStockDto> toPortfolioStockDtoList(List<UserStock> userStocks);
     
+    @Mapping(source = "id", target = "userId")
     @Mapping(target = "totalValue", ignore = true)
     @Mapping(target = "netProfit", ignore = true)
     UserResponse toUserResponse(User user);
