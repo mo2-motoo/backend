@@ -7,7 +7,6 @@ import com.hsu_mafia.motoo.api.domain.portfolio.UserStock;
 import com.hsu_mafia.motoo.api.domain.portfolio.UserStockRepository;
 import com.hsu_mafia.motoo.api.domain.user.User;
 import com.hsu_mafia.motoo.api.domain.user.UserRepository;
-import com.hsu_mafia.motoo.api.dto.execution.ExecutionDto;
 import com.hsu_mafia.motoo.global.exception.BaseException;
 import com.hsu_mafia.motoo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +29,8 @@ public class ExecutionService {
     private final UserRepository userRepository;
     private final UserStockRepository userStockRepository;
 
-    public List<ExecutionDto> getExecutions(Long userId) {
-        List<Execution> executions = executionRepository.findByUserIdOrderByExecutedAtDesc(userId);
-        
-        return executions.stream()
-                .map(this::convertToExecutionDto)
-                .collect(Collectors.toList());
+    public List<Execution> getExecutions(Long userId, Pageable pageable) {
+        return executionRepository.findByUserId(userId, pageable);
     }
 
     @Transactional
@@ -115,17 +112,5 @@ public class ExecutionService {
 
             userStockRepository.save(newUserStock);
         }
-    }
-
-    private ExecutionDto convertToExecutionDto(Execution execution) {
-        return ExecutionDto.builder()
-                .executionId(execution.getId())
-                .stockId(execution.getStock().getId())
-                .stockName(execution.getStock().getStockName())
-                .orderType(execution.getOrderType())
-                .quantity(execution.getQuantity())
-                .executedPrice(execution.getExecutedPrice())
-                .executedAt(execution.getExecutedAt())
-                .build();
     }
 } 

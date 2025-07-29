@@ -7,7 +7,6 @@ import com.hsu_mafia.motoo.api.domain.user.UserRepository;
 import com.hsu_mafia.motoo.api.domain.portfolio.UserStock;
 import com.hsu_mafia.motoo.api.domain.portfolio.UserStockRepository;
 import com.hsu_mafia.motoo.api.dto.order.OrderRequest;
-import com.hsu_mafia.motoo.api.dto.order.OrderResponse;
 import com.hsu_mafia.motoo.global.exception.BaseException;
 import com.hsu_mafia.motoo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 @Service
 @RequiredArgsConstructor
@@ -65,12 +66,12 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    public List<OrderResponse> getOrders(Long userId) {
-        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        
-        return orders.stream()
-                .map(this::convertToOrderResponse)
-                .collect(Collectors.toList());
+    public List<Order> getOrders(Long userId, Pageable pageable) {
+        return orderRepository.findByUserId(userId, pageable);
+    }
+    
+    public List<Order> getOrdersByStatus(Long userId, OrderStatus status, Pageable pageable) {
+        return orderRepository.findByUserIdAndStatus(userId, status, pageable);
     }
 
     @Transactional
@@ -89,18 +90,5 @@ public class OrderService {
         }
 
         order.updateStatus(OrderStatus.CANCELLED);
-    }
-
-    private OrderResponse convertToOrderResponse(Order order) {
-        return OrderResponse.builder()
-                .orderId(order.getId())
-                .stockId(order.getStock().getId())
-                .stockName(order.getStock().getStockName())
-                .orderType(order.getOrderType())
-                .quantity(order.getQuantity())
-                .price(order.getPrice())
-                .status(order.getStatus())
-                .createdAt(order.getCreatedAt())
-                .build();
     }
 } 
