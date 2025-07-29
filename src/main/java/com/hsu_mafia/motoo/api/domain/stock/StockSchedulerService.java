@@ -19,21 +19,52 @@ public class StockSchedulerService {
     private final FinancialDataCollectionService financialDataCollectionService;
     
     /**
-     * 1분봉 데이터 수집 스케줄러
+     * KOSPI 1분봉 데이터 수집 스케줄러
      * 평일 09:00-15:30, 매 1분마다 실행
      */
     @Scheduled(cron = "0 * 9-15 * * MON-FRI")
-    public void scheduleMinuteDataCollection() {
+    public void scheduleKospiMinuteDataCollection() {
         LocalDateTime now = LocalDateTime.now();
         LocalTime currentTime = now.toLocalTime();
         
-        // 거래시간 체크 (09:00-15:30)
-        if (currentTime.isBefore(LocalTime.of(ApiConstants.TRADING_START_HOUR, ApiConstants.TRADING_START_MINUTE)) || 
-            currentTime.isAfter(LocalTime.of(ApiConstants.TRADING_END_HOUR, ApiConstants.TRADING_END_MINUTE))) {
+        // KOSPI 거래시간 체크 (09:00-15:30)
+        if (currentTime.isBefore(LocalTime.of(ApiConstants.KOSPI_TRADING_START_HOUR, ApiConstants.KOSPI_TRADING_START_MINUTE)) || 
+            currentTime.isAfter(LocalTime.of(ApiConstants.KOSPI_TRADING_END_HOUR, ApiConstants.KOSPI_TRADING_END_MINUTE))) {
             return;
         }
         
-        stockDataCollectionService.collectMinuteData();
+        stockDataCollectionService.collectKospiMinuteData();
+    }
+    
+    /**
+     * NASDAQ 1분봉 데이터 수집 스케줄러
+     * 매일 22:30-05:00(다음날), 매 1분마다 실행
+     * NASDAQ은 미국 동부시간 기준 09:30-16:00 (한국시간 22:30-05:00)
+     */
+    @Scheduled(cron = "0 * 22-23,0-5 * * *")
+    public void scheduleNasdaqMinuteDataCollection() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalTime currentTime = now.toLocalTime();
+        
+        // NASDAQ 거래시간 체크 (22:30-05:00)
+        boolean isNasdaqTradingTime = false;
+        
+        // 22:30-23:59
+        if (currentTime.isAfter(LocalTime.of(ApiConstants.NASDAQ_TRADING_START_HOUR, ApiConstants.NASDAQ_TRADING_START_MINUTE)) && 
+            currentTime.isBefore(LocalTime.of(23, 59, 59))) {
+            isNasdaqTradingTime = true;
+        }
+        // 00:00-05:00
+        else if (currentTime.isAfter(LocalTime.of(0, 0, 0)) && 
+                 currentTime.isBefore(LocalTime.of(ApiConstants.NASDAQ_TRADING_END_HOUR, ApiConstants.NASDAQ_TRADING_END_MINUTE))) {
+            isNasdaqTradingTime = true;
+        }
+        
+        if (!isNasdaqTradingTime) {
+            return;
+        }
+        
+        stockDataCollectionService.collectNasdaqMinuteData();
     }
     
     /**
@@ -81,7 +112,21 @@ public class StockSchedulerService {
      */
     
     /**
-     * 수동으로 1분봉 데이터 수집을 실행합니다.
+     * 수동으로 KOSPI 1분봉 데이터 수집을 실행합니다.
+     */
+    public void manualCollectKospiMinuteData() {
+        stockDataCollectionService.collectKospiMinuteData();
+    }
+    
+    /**
+     * 수동으로 NASDAQ 1분봉 데이터 수집을 실행합니다.
+     */
+    public void manualCollectNasdaqMinuteData() {
+        stockDataCollectionService.collectNasdaqMinuteData();
+    }
+    
+    /**
+     * 수동으로 1분봉 데이터 수집을 실행합니다. (기존 호환성)
      */
     public void manualCollectMinuteData() {
         stockDataCollectionService.collectMinuteData();
