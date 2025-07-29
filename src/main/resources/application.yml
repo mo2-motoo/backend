@@ -5,6 +5,15 @@ spring:
   application:
     name: session
 
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+      write-dates-with-zone-id: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/database}
     username: sa
@@ -21,9 +30,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  redis:
-    host: redis
-    port: 6379
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
 
 management:
   endpoints:
