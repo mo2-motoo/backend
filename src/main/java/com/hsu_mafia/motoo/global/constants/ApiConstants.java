@@ -40,6 +40,12 @@ public final class ApiConstants {
     public static final String KIS_NASDAQ_TOP_STOCKS_URL = KIS_BASE_URL + "/uapi/overseas-price/v1/quotations/inquire-price";
     public static final String TR_ID_NASDAQ_TOP = "HHDFS00000300";
     
+    // 재무제표 API
+    public static final String KIS_FINANCIAL_QUARTERLY_URL = KIS_BASE_URL + "/uapi/domestic-stock/v1/finance/inquire-finance";
+    public static final String KIS_FINANCIAL_ANNUAL_URL = KIS_BASE_URL + "/uapi/domestic-stock/v1/finance/inquire-finance";
+    public static final String TR_ID_FINANCIAL_QUARTERLY = "FHKST01010100";
+    public static final String TR_ID_FINANCIAL_ANNUAL = "FHKST01010100";
+    
     // 거래시간
     public static final int TRADING_START_HOUR = 9;
     public static final int TRADING_START_MINUTE = 0;
