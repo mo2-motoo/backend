@@ -2,6 +2,7 @@ package com.hsu_mafia.motoo.api.domain.stock;
 
 import com.hsu_mafia.motoo.api.domain.stock.Industry;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,7 @@ public class Stock extends BaseEntity {
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "industry_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Industry industry;
     
     @Builder
