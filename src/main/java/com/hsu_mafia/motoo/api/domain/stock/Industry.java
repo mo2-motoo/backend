@@ -24,5 +24,6 @@ public class Industry extends BaseEntity {
     private String name;
 
     @OneToMany(mappedBy = "industry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Stock> stocks = new ArrayList<>();
 } 
