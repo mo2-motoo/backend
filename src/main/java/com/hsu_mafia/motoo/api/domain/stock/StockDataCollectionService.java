@@ -36,35 +36,100 @@ public class StockDataCollectionService {
      * 활성화된 모든 종목의 1분봉 데이터를 수집합니다.
      */
     public void collectMinuteData() {
-        List<Stock> activeStocks = stockRepository.findActiveStocks();
+        // KOSPI 종목과 NASDAQ 종목을 분리하여 수집
+        collectKospiMinuteData();
+        collectNasdaqMinuteData();
+    }
+    
+    /**
+     * KOSPI 종목의 1분봉 데이터를 수집합니다.
+     */
+    public void collectKospiMinuteData() {
+        List<Stock> kospiStocks = stockRepository.findActiveStocksByMarketType(ApiConstants.MARKET_TYPE_KOSPI);
         LocalDateTime now = LocalDateTime.now();
         
-        for (Stock stock : activeStocks) {
-            collectMinuteDataForStock(stock.getStockCode(), now);
+        for (Stock stock : kospiStocks) {
+            collectKospiMinuteDataForStock(stock.getStockCode(), now);
             try {
                 Thread.sleep(ApiConstants.API_CALL_INTERVAL);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new DataCollectionException("데이터 수집이 중단되었습니다: " + e.getMessage());
+                throw new DataCollectionException("KOSPI 데이터 수집이 중단되었습니다: " + e.getMessage());
             }
         }
     }
     
     /**
-     * 특정 종목의 1분봉 데이터를 수집합니다.
+     * NASDAQ 종목의 1분봉 데이터를 수집합니다.
      */
-    private void collectMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
+    public void collectNasdaqMinuteData() {
+        List<Stock> nasdaqStocks = stockRepository.findActiveStocksByMarketType(ApiConstants.MARKET_TYPE_NASDAQ);
+        LocalDateTime now = LocalDateTime.now();
+        
+        for (Stock stock : nasdaqStocks) {
+            collectNasdaqMinuteDataForStock(stock.getStockCode(), now);
+            try {
+                Thread.sleep(ApiConstants.API_CALL_INTERVAL);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new DataCollectionException("NASDAQ 데이터 수집이 중단되었습니다: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * 특정 KOSPI 종목의 1분봉 데이터를 수집합니다.
+     */
+    private void collectKospiMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
         JsonNode response = stockApiService.getStockCurrentPrice(stockCode);
         JsonNode output = response.path("output");
         
         if (output.isMissingNode()) {
-            log.warn("종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+            log.warn("KOSPI 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
             return;
         }
         
         Long currentPrice = Long.parseLong(output.path("stck_prpr").asText("0"));
         Long volume = Long.parseLong(output.path("acml_vol").asText("0"));
         Long amount = Long.parseLong(output.path("acml_tr_pbmn").asText("0"));
+        
+        // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
+        StockPriceMinute minuteData = StockPriceMinute.builder()
+                .stockCode(stockCode)
+                .timestamp(timestamp)
+                .openPrice(currentPrice)
+                .highPrice(currentPrice)
+                .lowPrice(currentPrice)
+                .closePrice(currentPrice)
+                .volume(volume)
+                .amount(amount)
+                .build();
+        
+        // 중복 방지를 위해 기존 데이터 확인
+        Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                .findByStockCodeAndTimestamp(stockCode, timestamp);
+        
+        if (existing.isEmpty()) {
+            stockPriceMinuteRepository.save(minuteData);
+        }
+    }
+    
+    /**
+     * 특정 NASDAQ 종목의 1분봉 데이터를 수집합니다.
+     */
+    private void collectNasdaqMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
+        JsonNode response = stockApiService.getOverseasStockCurrentPrice(stockCode);
+        JsonNode output = response.path("output");
+        
+        if (output.isMissingNode()) {
+            log.warn("NASDAQ 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+            return;
+        }
+        
+        // 해외주식 API 응답 파싱
+        Long currentPrice = Long.parseLong(output.path("last").asText("0"));
+        Long volume = Long.parseLong(output.path("volume").asText("0"));
+        Long amount = Long.parseLong(output.path("amount").asText("0"));
         
         // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
         StockPriceMinute minuteData = StockPriceMinute.builder()
