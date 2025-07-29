@@ -15,6 +15,12 @@ public interface StockPriceDailyRepository extends JpaRepository<StockPriceDaily
     @Query("SELECT sp FROM StockPriceDaily sp WHERE sp.stockCode = :stockCode ORDER BY sp.date DESC")
     List<StockPriceDaily> findByStockCodeOrderByDateDesc(@Param("stockCode") String stockCode);
     
+    Optional<StockPriceDaily> findTopByStockCodeOrderByDateDesc(String stockCode);
+    
+    Optional<StockPriceDaily> findTopByStockCodeAndDateGreaterThanEqualOrderByLowPriceAsc(String stockCode, LocalDate startDate);
+    
+    Optional<StockPriceDaily> findTopByStockCodeAndDateGreaterThanEqualOrderByHighPriceDesc(String stockCode, LocalDate startDate);
+    
     @Query("SELECT sp FROM StockPriceDaily sp WHERE sp.stockCode = :stockCode AND sp.date BETWEEN :startDate AND :endDate ORDER BY sp.date")
     List<StockPriceDaily> findByStockCodeAndDateBetween(@Param("stockCode") String stockCode, 
                                                        @Param("startDate") LocalDate startDate, 

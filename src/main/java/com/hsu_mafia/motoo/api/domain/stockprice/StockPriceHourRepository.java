@@ -15,6 +15,8 @@ public interface StockPriceHourRepository extends JpaRepository<StockPriceHour, 
     @Query("SELECT sp FROM StockPriceHour sp WHERE sp.stockCode = :stockCode ORDER BY sp.timestamp DESC")
     List<StockPriceHour> findByStockCodeOrderByTimestampDesc(@Param("stockCode") String stockCode);
     
+    Optional<StockPriceHour> findTopByStockCodeOrderByTimestampDesc(String stockCode);
+    
     @Query("SELECT sp FROM StockPriceHour sp WHERE sp.stockCode = :stockCode AND sp.timestamp BETWEEN :startTime AND :endTime ORDER BY sp.timestamp")
     List<StockPriceHour> findByStockCodeAndTimestampBetween(@Param("stockCode") String stockCode, 
                                                            @Param("startTime") LocalDateTime startTime, 
