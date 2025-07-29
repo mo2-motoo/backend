@@ -1,5 +1,6 @@
 package com.hsu_mafia.motoo.api.domain.stock;
 
+import com.hsu_mafia.motoo.api.domain.financial.FinancialDataCollectionService;
 import com.hsu_mafia.motoo.global.constants.ApiConstants;
 import com.hsu_mafia.motoo.global.exception.SchedulerException;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class StockSchedulerService {
     
     private final StockManagementService stockManagementService;
     private final StockDataCollectionService stockDataCollectionService;
+    private final FinancialDataCollectionService financialDataCollectionService;
     
     /**
      * 1분봉 데이터 수집 스케줄러
@@ -66,6 +68,15 @@ public class StockSchedulerService {
     }
     
     /**
+     * 재무제표 데이터 수집 스케줄러
+     * 분기별로 실행 (3, 6, 9, 12월 1일 자정)
+     */
+    @Scheduled(cron = "0 0 0 1 3,6,9,12 *")
+    public void scheduleFinancialDataCollection() {
+        financialDataCollectionService.collectFinancialData();
+    }
+    
+    /**
      * 수동 실행을 위한 메서드들
      */
     
@@ -102,5 +113,19 @@ public class StockSchedulerService {
      */
     public void manualUpdateNasdaqStocks() {
         stockManagementService.updateNasdaqStocks();
+    }
+    
+    /**
+     * 수동으로 재무제표 데이터 수집을 실행합니다.
+     */
+    public void manualCollectFinancialData() {
+        financialDataCollectionService.collectFinancialData();
+    }
+    
+    /**
+     * 수동으로 특정 종목의 재무제표 데이터 수집을 실행합니다.
+     */
+    public void manualCollectFinancialDataForStock(String stockCode) {
+        financialDataCollectionService.collectFinancialDataForStock(stockCode);
     }
 } 
