@@ -26,4 +26,8 @@ public interface UserStockRepository extends JpaRepository<UserStock, Long> {
     // 기존 메서드들 (하위 호환성을 위해 유지)
     List<UserStock> findByUser(User user);
     Optional<UserStock> findByUserAndStock(User user, Stock stock);
+    
+    // 사용자 ID와 종목 코드로 보유 주식 조회
+    @Query("SELECT us FROM UserStock us WHERE us.user.id = :userId AND us.stock.stockCode = :stockCode")
+    Optional<UserStock> findByUserIdAndStockCode(@Param("userId") Long userId, @Param("stockCode") String stockCode);
 } 
