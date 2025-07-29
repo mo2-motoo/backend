@@ -4,7 +4,6 @@
 
 #### pdf url
 [ERDCloud URL](https://github.com/mo2-motoo/backend/blob/main/docs/Motoo_ERD.pdf)
-[ERD 다이어그램 pdf](https://github.com/mo2-motoo/backend/blob/main/docs/Motoo_ERD.pdf)
 
 <details>
 <summary>📋 ERD 다이어그램 보기/숨기기</summary>
