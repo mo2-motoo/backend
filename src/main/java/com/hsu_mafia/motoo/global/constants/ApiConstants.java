@@ -7,7 +7,7 @@ public final class ApiConstants {
     }
     
     // 한국투자증권 API URL
-    public static final String KIS_BASE_URL = "https://openapi.koreainvestment.com:9443";
+    public static final String KIS_BASE_URL = "https://openapivts.koreainvestment.com:29443";
     public static final String KIS_TOKEN_URL = KIS_BASE_URL + "/oauth2/tokenP";
     public static final String KIS_REVOKE_URL = KIS_BASE_URL + "/oauth2/revokeP";
     

@@ -2,6 +2,7 @@ package com.hsu_mafia.motoo.api.domain.token;
 
 import com.hsu_mafia.motoo.api.dto.token.TokenRes;
 import com.hsu_mafia.motoo.global.config.KisConfig;
+import com.hsu_mafia.motoo.global.constants.ApiConstants;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class TokenService {
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(
-                    "https://openapi.koreainvestment.com:9443/oauth2/revokeP",
+                    ApiConstants.KIS_REVOKE_URL,
                     HttpMethod.POST,
                     new HttpEntity<>(objectMapper.writeValueAsString(requestMap), httpHeaders),
                     String.class
@@ -148,13 +149,18 @@ public class TokenService {
 
         try {
             ResponseEntity<TokenRes> response = restTemplate.exchange(
-                    "https://openapi.koreainvestment.com:9443/oauth2/tokenP",
+                    ApiConstants.KIS_TOKEN_URL,
                     HttpMethod.POST,
                     new HttpEntity<>(objectMapper.writeValueAsString(requestMap), httpHeaders),
                     TokenRes.class
             );
 
+            log.info("API 응답 전체: {}", response.getBody());
+            log.info("API 응답 access_token: {}", response.getBody().getAccessToken());
+            log.info("API 응답 access_token_token_expired: {}", response.getBody().getAccessTokenTokenExpired());
+
             Token token = tokenMapper.toToken(Objects.requireNonNull(response.getBody()));
+            log.info("매핑된 Token 엔티티: {}", token);
             tokenRepository.save(token);
 
             log.info("새로운 토큰을 발급받았습니다: {}, 만료기간: {}",
