@@ -38,6 +38,8 @@ services:
     image: redis:7
     container_name: redis
     restart: always
+    ports:
+      - "6379:6379"
     command:
       [
         "redis-server",
@@ -84,7 +86,9 @@ services:
       - logging-network
     restart: unless-stopped
     env_file:
-      - .env
+      - docker.env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
 
 volumes:
   postgres_data:
