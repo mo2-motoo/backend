@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -134,8 +135,8 @@ public class OrderExecutionService {
         
         // 사용자 잔고 확인
         if (order.getOrderType() == OrderType.BUY) {
-            Long requiredAmount = order.getQuantity() * order.getPrice();
-            if (user.getCash() < requiredAmount) {
+            BigDecimal requiredAmount = order.getPrice().multiply(new BigDecimal(order.getQuantity()));
+            if (user.getCash() < requiredAmount.longValue()) {
                 log.warn("잔고 부족. UserId: {}, Required: {}, Available: {}", 
                     user.getId(), requiredAmount, user.getCash());
                 return false;
@@ -160,7 +161,7 @@ public class OrderExecutionService {
      * 주문이 체결 가능한지 확인합니다.
      */
     private boolean canExecuteOrder(Order order) {
-        Long currentPrice = priceUtil.getCurrentPrice(order.getStock().getStockCode());
+        BigDecimal currentPrice = priceUtil.getCurrentPrice(order.getStock().getStockCode());
         
         if (currentPrice == null) {
             log.warn("현재가 정보를 가져올 수 없습니다. StockCode: {}", order.getStock().getStockCode());
@@ -175,10 +176,10 @@ public class OrderExecutionService {
         // 지정가 주문 체결 조건 확인
         if (order.getOrderType() == OrderType.BUY) {
             // 매수: 현재가 <= 주문가
-            return currentPrice <= order.getPrice();
+            return currentPrice.compareTo(order.getPrice()) <= 0;
         } else {
             // 매도: 현재가 >= 주문가
-            return currentPrice >= order.getPrice();
+            return currentPrice.compareTo(order.getPrice()) >= 0;
         }
     }
     
@@ -186,7 +187,7 @@ public class OrderExecutionService {
      * 주문을 체결합니다.
      */
     private void executeOrder(Order order) {
-        Long currentPrice = priceUtil.getCurrentPrice(order.getStock().getStockCode());
+        BigDecimal currentPrice = priceUtil.getCurrentPrice(order.getStock().getStockCode());
         
         // 체결 정보 생성
         Execution execution = Execution.builder()
@@ -217,27 +218,27 @@ public class OrderExecutionService {
     /**
      * 사용자 자산을 업데이트합니다.
      */
-    private void updateUserAssets(Order order, Long executedPrice) {
+    private void updateUserAssets(Order order, BigDecimal executedPrice) {
         User user = order.getUser();
         Stock stock = order.getStock();
         
         if (order.getOrderType() == OrderType.BUY) {
             // 매수: 현금 차감, 주식 추가
-            Long totalAmount = order.getQuantity() * executedPrice;
+            Long totalAmount = order.getQuantity() * executedPrice.longValue();
             user.updateCash(user.getCash() - totalAmount);
             userRepository.save(user);
             
             // 보유 주식 업데이트
-            updateUserStock(user, stock, order.getQuantity(), executedPrice, true);
+            updateUserStock(user, stock, order.getQuantity(), executedPrice.longValue(), true);
             
         } else {
             // 매도: 현금 추가, 주식 차감
-            Long totalAmount = order.getQuantity() * executedPrice;
+            Long totalAmount = order.getQuantity() * executedPrice.longValue();
             user.updateCash(user.getCash() + totalAmount);
             userRepository.save(user);
             
             // 보유 주식 업데이트
-            updateUserStock(user, stock, order.getQuantity(), executedPrice, false);
+            updateUserStock(user, stock, order.getQuantity(), executedPrice.longValue(), false);
         }
     }
     
@@ -288,9 +289,9 @@ public class OrderExecutionService {
     /**
      * 거래내역을 생성합니다.
      */
-    private void createTransactionHistory(Order order, Long executedPrice) {
+    private void createTransactionHistory(Order order, BigDecimal executedPrice) {
         String description = order.getOrderType() == OrderType.BUY ? "매수 체결" : "매도 체결";
-        Long amount = order.getQuantity() * executedPrice;
+        Long amount = order.getQuantity() * executedPrice.longValue();
         
         // 매도인 경우 양수로, 매수인 경우 음수로 기록
         if (order.getOrderType() == OrderType.BUY) {

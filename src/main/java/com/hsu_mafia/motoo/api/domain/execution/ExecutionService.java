@@ -20,6 +20,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,7 +36,7 @@ public class ExecutionService {
     }
 
     @Transactional
-    public void processOrderExecution(Long orderId, Long executedPrice) {
+    public void processOrderExecution(Long orderId, BigDecimal executedPrice) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BaseException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -43,16 +45,16 @@ public class ExecutionService {
         }
 
         User user = order.getUser();
-        Long totalAmount = executedPrice * order.getQuantity();
+        BigDecimal totalAmount = executedPrice.multiply(new BigDecimal(order.getQuantity()));
 
         if (order.getOrderType().name().equals("BUY")) {
             // 매수 체결 처리
-            if (user.getCash() < totalAmount) {
+            if (user.getCash() < totalAmount.longValue()) {
                 throw new BaseException(ErrorCode.INSUFFICIENT_CASH);
             }
 
             // 현금 차감
-            user.updateCash(user.getCash() - totalAmount);
+            user.updateCash(user.getCash() - totalAmount.longValue());
 
             // 보유 주식 업데이트
             updateUserStock(user, order.getStock(), order.getQuantity(), executedPrice);
@@ -70,7 +72,7 @@ public class ExecutionService {
             userStock.updateQuantity(userStock.getQuantity() - order.getQuantity());
 
             // 현금 증가
-            user.updateCash(user.getCash() + totalAmount);
+            user.updateCash(user.getCash() + totalAmount.longValue());
         }
 
         // 체결 내역 생성
@@ -89,15 +91,16 @@ public class ExecutionService {
         order.updateStatus(OrderStatus.COMPLETED);
     }
 
-    private void updateUserStock(User user, com.hsu_mafia.motoo.api.domain.stock.Stock stock, Long quantity, Long executedPrice) {
+    private void updateUserStock(User user, com.hsu_mafia.motoo.api.domain.stock.Stock stock, Long quantity, BigDecimal executedPrice) {
         Optional<UserStock> existingUserStock = userStockRepository.findByUserAndStock(user, stock);
 
         if (existingUserStock.isPresent()) {
             // 기존 보유 주식이 있는 경우 평단가 계산
             UserStock userStock = existingUserStock.get();
             Long totalQuantity = userStock.getQuantity() + quantity;
-            Long totalCost = (userStock.getAverageBuyPrice() * userStock.getQuantity()) + (executedPrice * quantity);
-            Long newAveragePrice = totalCost / totalQuantity;
+            BigDecimal totalCost = new BigDecimal(userStock.getAverageBuyPrice()).multiply(new BigDecimal(userStock.getQuantity()))
+                    .add(executedPrice.multiply(new BigDecimal(quantity)));
+            Long newAveragePrice = totalCost.divide(new BigDecimal(totalQuantity), 0, BigDecimal.ROUND_HALF_UP).longValue();
 
             userStock.updateQuantity(totalQuantity);
             userStock.updateAverageBuyPrice(newAveragePrice);
@@ -107,7 +110,7 @@ public class ExecutionService {
                     .user(user)
                     .stock(stock)
                     .quantity(quantity)
-                    .averageBuyPrice(executedPrice)
+                    .averageBuyPrice(executedPrice.longValue())
                     .build();
 
             userStockRepository.save(newUserStock);

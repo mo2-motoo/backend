@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -18,12 +19,12 @@ public class OrderQueueMessage {
     private String stockCode;
     private OrderType orderType;
     private Long quantity;
-    private Long price; // 지정가 (시장가인 경우 null)
+    private BigDecimal price; // 지정가 (시장가인 경우 null)
     private LocalDateTime createdAt;
     private boolean isMarketOrder; // 시장가 주문 여부
     
     public static OrderQueueMessage fromOrder(Long orderId, Long userId, String stockCode, 
-                                            OrderType orderType, Long quantity, Long price, 
+                                            OrderType orderType, Long quantity, BigDecimal price, 
                                             LocalDateTime createdAt, boolean isMarketOrder) {
         return OrderQueueMessage.builder()
                 .orderId(orderId)

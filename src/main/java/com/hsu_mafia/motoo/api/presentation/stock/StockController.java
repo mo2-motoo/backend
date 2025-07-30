@@ -90,7 +90,7 @@ public class StockController {
                 .outline(stock.getOutline())
                 .marketType(stock.getMarketType())
                 .industryName(stock.getIndustry() != null ? stock.getIndustry().getName() : null)
-                .currentPrice(priceUtil.getCurrentPrice(stockCode).longValue())
+                .currentPrice(priceUtil.getCurrentPrice(stockCode))
                 .priceDifference(priceUtil.getPriceDifference(stockCode))
                 .rateDifference(priceUtil.getRateDifference(stockCode))
                 .tradingVolume(priceUtil.getTradingVolume(stockCode))

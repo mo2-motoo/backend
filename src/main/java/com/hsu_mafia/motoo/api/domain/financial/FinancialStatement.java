@@ -3,6 +3,7 @@ package com.hsu_mafia.motoo.api.domain.financial;
 import com.hsu_mafia.motoo.api.domain.stock.Stock;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -99,18 +100,18 @@ public class FinancialStatement extends BaseEntity {
     /**
      * PER 계산 (현재가 필요)
      */
-    public void calculatePer(Long currentPrice) {
+    public void calculatePer(Double currentPrice) {
         if (eps != null && eps > 0 && currentPrice != null) {
-            this.per = (double) currentPrice / eps;
+            this.per = currentPrice / eps;
         }
     }
     
     /**
      * PBR 계산 (현재가 필요)
      */
-    public void calculatePbr(Long currentPrice) {
+    public void calculatePbr(Double currentPrice) {
         if (bps != null && bps > 0 && currentPrice != null) {
-            this.pbr = (double) currentPrice / bps;
+            this.pbr = currentPrice / bps;
         }
     }
     
@@ -135,7 +136,7 @@ public class FinancialStatement extends BaseEntity {
     /**
      * 모든 재무지표 계산
      */
-    public void calculateAllRatios(Long currentPrice) {
+    public void calculateAllRatios(Double currentPrice) {
         calculateEps();
         calculateBps();
         calculatePer(currentPrice);

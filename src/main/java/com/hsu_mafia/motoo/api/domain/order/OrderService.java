@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -41,8 +42,8 @@ public class OrderService {
 
         // 매수 주문인 경우 현금 확인
         if (request.getOrderType() == OrderType.BUY) {
-            Long requiredAmount = request.getPrice() * request.getQuantity();
-            if (user.getCash() < requiredAmount) {
+            BigDecimal requiredAmount = request.getPrice().multiply(new BigDecimal(request.getQuantity()));
+            if (user.getCash() < requiredAmount.longValue()) {
                 throw new BaseException(ErrorCode.INSUFFICIENT_CASH);
             }
         }
