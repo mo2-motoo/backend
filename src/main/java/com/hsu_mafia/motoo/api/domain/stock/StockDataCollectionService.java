@@ -34,15 +34,6 @@ public class StockDataCollectionService {
     private final StockPriceDailyRepository stockPriceDailyRepository;
     
     /**
-     * 활성화된 모든 종목의 1분봉 데이터를 수집합니다.
-     */
-    public void collectMinuteData() {
-        // KOSPI 종목과 NASDAQ 종목을 분리하여 수집
-        collectKospiMinuteData();
-        collectNasdaqMinuteData();
-    }
-    
-    /**
      * KOSPI 종목의 1분봉 데이터를 수집합니다.
      */
     public void collectKospiMinuteData() {
