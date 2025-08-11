@@ -2,7 +2,8 @@ package com.hsu_mafia.motoo.api.presentation.stock;
 
 import com.hsu_mafia.motoo.api.domain.stock.Stock;
 import com.hsu_mafia.motoo.api.domain.stock.StockManagementService;
-import com.hsu_mafia.motoo.api.domain.stock.StockSchedulerService;
+import com.hsu_mafia.motoo.api.domain.stock.StockDataCollectionService;
+import com.hsu_mafia.motoo.api.domain.financial.FinancialDataCollectionService;
 import com.hsu_mafia.motoo.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +21,8 @@ import java.util.List;
 public class StockManagementController {
     
     private final StockManagementService stockManagementService;
-    private final StockSchedulerService stockSchedulerService;
+    private final StockDataCollectionService stockDataCollectionService;
+    private final FinancialDataCollectionService financialDataCollectionService;
     
     /**
      * KOSPI 200 종목 수동 갱신
@@ -28,7 +30,7 @@ public class StockManagementController {
     @PostMapping("/stocks/kospi200")
     @Operation(summary = "KOSPI 200 종목 갱신", description = "KOSPI 200 구성종목을 수동으로 갱신합니다.")
     public ResponseEntity<CommonResponse<Void>> updateKospi200Stocks() {
-        stockSchedulerService.manualUpdateKospi200Stocks();
+        stockManagementService.updateKospi200Stocks();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -39,7 +41,7 @@ public class StockManagementController {
     @PostMapping("/stocks/nasdaq")
     @Operation(summary = "NASDAQ 상위 종목 갱신", description = "NASDAQ 상위 30개 종목을 수동으로 갱신합니다.")
     public ResponseEntity<CommonResponse<Void>> updateNasdaqStocks() {
-        stockSchedulerService.manualUpdateNasdaqStocks();
+        stockManagementService.updateNasdaqStocks();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -82,10 +84,21 @@ public class StockManagementController {
     /**
      * 1분봉 데이터 수집 수동 실행
      */
-    @PostMapping("/data/collect/minute")
-    @Operation(summary = "1분봉 데이터 수집", description = "활성화된 모든 종목의 1분봉 데이터를 수동으로 수집합니다.")
-    public ResponseEntity<CommonResponse<Void>> collectMinuteData() {
-        stockSchedulerService.manualCollectMinuteData();
+    @PostMapping("/data/collect/kospi-minute")
+    @Operation(summary = "KOSPI 1분봉 데이터 수집", description = "KOSPI 종목의 1분봉 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectKospiMinuteData() {
+        stockDataCollectionService.collectKospiMinuteData();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success());
+    }
+    
+    /**
+     * NASDAQ 1분봉 데이터 수집 수동 실행
+     */
+    @PostMapping("/data/collect/nasdaq-minute")
+    @Operation(summary = "NASDAQ 1분봉 데이터 수집", description = "NASDAQ 종목의 1분봉 데이터를 수동으로 수집합니다.")
+    public ResponseEntity<CommonResponse<Void>> collectNasdaqMinuteData() {
+        stockDataCollectionService.collectNasdaqMinuteData();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -96,7 +109,7 @@ public class StockManagementController {
     @PostMapping("/data/aggregate/hour")
     @Operation(summary = "1시간봉 데이터 집계", description = "1분봉 데이터를 집계하여 1시간봉 데이터를 생성합니다.")
     public ResponseEntity<CommonResponse<Void>> aggregateHourData() {
-        stockSchedulerService.manualAggregateHourData();
+        stockDataCollectionService.aggregateHourData();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -107,7 +120,7 @@ public class StockManagementController {
     @PostMapping("/data/aggregate/daily")
     @Operation(summary = "1일봉 데이터 집계", description = "1시간봉 데이터를 집계하여 1일봉 데이터를 생성합니다.")
     public ResponseEntity<CommonResponse<Void>> aggregateDailyData() {
-        stockSchedulerService.manualAggregateDailyData();
+        stockDataCollectionService.aggregateDailyData();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -118,7 +131,7 @@ public class StockManagementController {
     @PostMapping("/data/collect/financial")
     @Operation(summary = "재무제표 데이터 수집", description = "활성화된 모든 종목의 재무제표 데이터를 수동으로 수집합니다.")
     public ResponseEntity<CommonResponse<Void>> collectFinancialData() {
-        stockSchedulerService.manualCollectFinancialData();
+        financialDataCollectionService.collectFinancialData();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -129,7 +142,7 @@ public class StockManagementController {
     @PostMapping("/data/collect/financial/{stockCode}")
     @Operation(summary = "특정 종목 재무제표 데이터 수집", description = "특정 종목의 재무제표 데이터를 수동으로 수집합니다.")
     public ResponseEntity<CommonResponse<Void>> collectFinancialDataForStock(@PathVariable String stockCode) {
-        stockSchedulerService.manualCollectFinancialDataForStock(stockCode);
+        financialDataCollectionService.collectFinancialDataForStock(stockCode);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success());
     }
@@ -146,43 +159,92 @@ public class StockManagementController {
     }
     
     /**
-     * E2E 테스트용 - 모든 스케줄링 작업 실행
+     * E2E 테스트용 - 종목 갱신 테스트
      */
-    @PostMapping("/test/e2e")
-    @Operation(summary = "E2E 테스트", description = "모든 스케줄링 작업을 순차적으로 실행합니다.")
-    public ResponseEntity<CommonResponse<String>> runE2ETest() {
+    @PostMapping("/test/update-stocks")
+    @Operation(summary = "종목 갱신 테스트", description = "KOSPI 200과 NASDAQ 종목 갱신을 테스트합니다.")
+    public ResponseEntity<CommonResponse<String>> testUpdateStocks() {
         // 1. 종목 갱신
-        stockSchedulerService.manualUpdateKospi200Stocks();
-        stockSchedulerService.manualUpdateNasdaqStocks();
-        
-        // 2. 데이터 수집
-        stockSchedulerService.manualCollectMinuteData();
-        
-        // 3. 데이터 집계
-        stockSchedulerService.manualAggregateHourData();
-        stockSchedulerService.manualAggregateDailyData();
+        stockManagementService.updateKospi200Stocks();
+        stockManagementService.updateNasdaqStocks();
         
         return ResponseEntity.status(HttpStatus.OK)
-                .body(CommonResponse.success("E2E 테스트가 성공적으로 완료되었습니다."));
-    }
-
-    /**
-     * KOSPI 1분봉 데이터 수집 수동 실행
-     */
-    @PostMapping("/data-collection/kospi/minute")
-    @Operation(summary = "KOSPI 1분봉 데이터 수집", description = "KOSPI 종목들의 1분봉 데이터를 수동으로 수집합니다.")
-    public ResponseEntity<CommonResponse<Void>> collectKospiMinuteData() {
-        stockSchedulerService.manualCollectKospiMinuteData();
-        return ResponseEntity.ok(CommonResponse.success());
+                .body(CommonResponse.success("종목 갱신 테스트가 성공적으로 완료되었습니다."));
     }
     
     /**
-     * NASDAQ 1분봉 데이터 수집 수동 실행
+     * E2E 테스트용 - KOSPI 데이터 수집 테스트
      */
-    @PostMapping("/data-collection/nasdaq/minute")
-    @Operation(summary = "NASDAQ 1분봉 데이터 수집", description = "NASDAQ 종목들의 1분봉 데이터를 수동으로 수집합니다.")
-    public ResponseEntity<CommonResponse<Void>> collectNasdaqMinuteData() {
-        stockSchedulerService.manualCollectNasdaqMinuteData();
-        return ResponseEntity.ok(CommonResponse.success());
+    @PostMapping("/test/kospi-data-collection")
+    @Operation(summary = "KOSPI 데이터 수집 테스트", description = "KOSPI 종목의 데이터 수집 및 집계를 테스트합니다.")
+    public ResponseEntity<CommonResponse<String>> testKospiDataCollection() {
+        // 1. KOSPI 1분봉 데이터 수집
+        stockDataCollectionService.collectKospiMinuteData();
+        
+        // 2. 1시간봉 데이터 집계
+        stockDataCollectionService.aggregateHourData();
+        
+        // 3. 1일봉 데이터 집계
+        stockDataCollectionService.aggregateDailyData();
+        
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.success("KOSPI 데이터 수집 테스트가 성공적으로 완료되었습니다."));
+    }
+    
+    /**
+     * E2E 테스트용 - NASDAQ 데이터 수집 테스트
+     */
+    @PostMapping("/test/nasdaq-data-collection")
+    @Operation(summary = "NASDAQ 데이터 수집 테스트", description = "NASDAQ 종목의 데이터 수집 및 집계를 테스트합니다.")
+    public ResponseEntity<CommonResponse<String>> testNasdaqDataCollection() {
+        // 1. NASDAQ 1분봉 데이터 수집
+        stockDataCollectionService.collectNasdaqMinuteData();
+        
+        // 2. 1시간봉 데이터 집계
+        stockDataCollectionService.aggregateHourData();
+        
+        // 3. 1일봉 데이터 집계
+        stockDataCollectionService.aggregateDailyData();
+        
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.success("NASDAQ 데이터 수집 테스트가 성공적으로 완료되었습니다."));
+    }
+    
+    /**
+     * E2E 테스트용 - 재무제표 데이터 수집 테스트
+     */
+    @PostMapping("/test/financial-data-collection")
+    @Operation(summary = "재무제표 데이터 수집 테스트", description = "재무제표 데이터 수집을 테스트합니다.")
+    public ResponseEntity<CommonResponse<String>> testFinancialDataCollection() {
+        // 재무제표 데이터 수집
+        financialDataCollectionService.collectFinancialData();
+        
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.success("재무제표 데이터 수집 테스트가 성공적으로 완료되었습니다."));
+    }
+    
+    /**
+     * E2E 테스트용 - 전체 시스템 테스트 (주의: 모든 기능을 순차적으로 실행)
+     */
+    @PostMapping("/test/full-system")
+    @Operation(summary = "전체 시스템 테스트", description = "모든 스케줄링 작업을 순차적으로 실행합니다. (주의: 장 시간과 무관하게 실행)")
+    public ResponseEntity<CommonResponse<String>> testFullSystem() {
+        // 1. 종목 갱신
+        stockManagementService.updateKospi200Stocks();
+        stockManagementService.updateNasdaqStocks();
+        
+        // 2. 데이터 수집 (장 시간과 무관하게 실행)
+        stockDataCollectionService.collectKospiMinuteData();
+        stockDataCollectionService.collectNasdaqMinuteData();
+        
+        // 3. 데이터 집계
+        stockDataCollectionService.aggregateHourData();
+        stockDataCollectionService.aggregateDailyData();
+        
+        // 4. 재무제표 데이터 수집
+        financialDataCollectionService.collectFinancialData();
+        
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.success("전체 시스템 테스트가 성공적으로 완료되었습니다. (주의: 장 시간과 무관하게 실행됨)"));
     }
 } 
