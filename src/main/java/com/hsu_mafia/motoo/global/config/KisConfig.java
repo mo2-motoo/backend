@@ -14,7 +14,5 @@ public class KisConfig {
     private String accountProductCode;
     private String grantType;
     private String scope;
-    private String baseUrl;
-    private String sandboxUrl;
     private int tokenExpirationMinutes;
 }

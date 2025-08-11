@@ -75,6 +75,4 @@ management.metrics.enable:
 kis:
   grant-type: client_credentials
   scope: oob
-  base-url: https://openapi.koreainvestment.com:9443
-  sandbox-url: https://openapivts.koreainvestment.com:29443
   token-expiration-minutes: 59
