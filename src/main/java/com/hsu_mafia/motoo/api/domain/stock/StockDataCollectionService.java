@@ -73,37 +73,46 @@ public class StockDataCollectionService {
      * 특정 KOSPI 종목의 1분봉 데이터를 수집합니다.
      */
     private void collectKospiMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
-        JsonNode response = stockApiService.getStockCurrentPrice(stockCode);
-        JsonNode output = response.path("output");
-        
-        if (output.isMissingNode()) {
-            log.warn("KOSPI 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
-            return;
-        }
-        
-        // 소수점이 포함된 가격 데이터를 BigDecimal로 파싱
-        BigDecimal currentPrice = parsePriceToBigDecimal(output.path("stck_prpr").asText("0"));
-        Long volume = Long.parseLong(output.path("acml_vol").asText("0"));
-        Long amount = Long.parseLong(output.path("acml_tr_pbmn").asText("0"));
-        
-        // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
-        StockPriceMinute minuteData = StockPriceMinute.builder()
-                .stockCode(stockCode)
-                .timestamp(timestamp)
-                .openPrice(currentPrice)
-                .highPrice(currentPrice)
-                .lowPrice(currentPrice)
-                .closePrice(currentPrice)
-                .volume(volume)
-                .amount(amount)
-                .build();
-        
-        // 중복 방지를 위해 기존 데이터 확인
-        Optional<StockPriceMinute> existing = stockPriceMinuteRepository
-                .findByStockCodeAndTimestamp(stockCode, timestamp);
-        
-        if (existing.isEmpty()) {
-            stockPriceMinuteRepository.save(minuteData);
+        try {
+            JsonNode response = stockApiService.getStockCurrentPrice(stockCode);
+            JsonNode output = response.path("output");
+            
+            if (output.isMissingNode()) {
+                log.warn("KOSPI 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+                // API 에러 시에도 기본 데이터 저장
+                saveDefaultKospiMinuteData(stockCode, timestamp);
+                return;
+            }
+            
+            // 소수점이 포함된 가격 데이터를 BigDecimal로 파싱
+            BigDecimal currentPrice = parsePriceToBigDecimal(output.path("stck_prpr").asText("0"));
+            Long volume = Long.parseLong(output.path("acml_vol").asText("0"));
+            Long amount = Long.parseLong(output.path("acml_tr_pbmn").asText("0"));
+            
+            // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(currentPrice)
+                    .highPrice(currentPrice)
+                    .lowPrice(currentPrice)
+                    .closePrice(currentPrice)
+                    .volume(volume)
+                    .amount(amount)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+            }
+            
+        } catch (Exception e) {
+            log.error("KOSPI 종목 {} 데이터 수집 실패: {}", stockCode, e.getMessage());
+            // 예외 발생 시에도 기본 데이터 저장
+            saveDefaultKospiMinuteData(stockCode, timestamp);
         }
     }
     
@@ -111,37 +120,104 @@ public class StockDataCollectionService {
      * 특정 NASDAQ 종목의 1분봉 데이터를 수집합니다.
      */
     private void collectNasdaqMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
-        JsonNode response = stockApiService.getOverseasStockCurrentPrice(stockCode);
-        JsonNode output = response.path("output");
-        
-        if (output.isMissingNode()) {
-            log.warn("NASDAQ 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
-            return;
+        try {
+            JsonNode response = stockApiService.getOverseasStockCurrentPrice(stockCode);
+            JsonNode output = response.path("output");
+            
+            if (output.isMissingNode()) {
+                log.warn("NASDAQ 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+                // API 에러 시에도 기본 데이터 저장
+                saveDefaultMinuteData(stockCode, timestamp);
+                return;
+            }
+            
+            // 해외주식 API 응답 파싱 - 소수점이 포함된 가격 데이터를 BigDecimal로 처리
+            BigDecimal currentPrice = parsePriceToBigDecimal(output.path("last").asText("0"));
+            Long volume = Long.parseLong(output.path("volume").asText("0"));
+            Long amount = Long.parseLong(output.path("amount").asText("0"));
+            
+            // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(currentPrice)
+                    .highPrice(currentPrice)
+                    .lowPrice(currentPrice)
+                    .closePrice(currentPrice)
+                    .volume(volume)
+                    .amount(amount)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+            }
+            
+        } catch (Exception e) {
+            log.error("NASDAQ 종목 {} 데이터 수집 실패: {}", stockCode, e.getMessage());
+            // 예외 발생 시에도 기본 데이터 저장
+            saveDefaultMinuteData(stockCode, timestamp);
         }
-        
-        // 해외주식 API 응답 파싱 - 소수점이 포함된 가격 데이터를 BigDecimal로 처리
-        BigDecimal currentPrice = parsePriceToBigDecimal(output.path("last").asText("0"));
-        Long volume = Long.parseLong(output.path("volume").asText("0"));
-        Long amount = Long.parseLong(output.path("amount").asText("0"));
-        
-        // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
-        StockPriceMinute minuteData = StockPriceMinute.builder()
-                .stockCode(stockCode)
-                .timestamp(timestamp)
-                .openPrice(currentPrice)
-                .highPrice(currentPrice)
-                .lowPrice(currentPrice)
-                .closePrice(currentPrice)
-                .volume(volume)
-                .amount(amount)
-                .build();
-        
-        // 중복 방지를 위해 기존 데이터 확인
-        Optional<StockPriceMinute> existing = stockPriceMinuteRepository
-                .findByStockCodeAndTimestamp(stockCode, timestamp);
-        
-        if (existing.isEmpty()) {
-            stockPriceMinuteRepository.save(minuteData);
+    }
+    
+    /**
+     * API 에러 시 기본 1분봉 데이터를 저장하는 헬퍼 메서드
+     */
+    private void saveDefaultMinuteData(String stockCode, LocalDateTime timestamp) {
+        try {
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(BigDecimal.ZERO)
+                    .highPrice(BigDecimal.ZERO)
+                    .lowPrice(BigDecimal.ZERO)
+                    .closePrice(BigDecimal.ZERO)
+                    .volume(0L)
+                    .amount(0L)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+                log.info("NASDAQ 종목 {}의 기본 데이터 저장 완료", stockCode);
+            }
+        } catch (Exception e) {
+            log.error("NASDAQ 종목 {} 기본 데이터 저장 실패: {}", stockCode, e.getMessage());
+        }
+    }
+    
+    /**
+     * KOSPI API 에러 시 기본 1분봉 데이터를 저장하는 헬퍼 메서드
+     */
+    private void saveDefaultKospiMinuteData(String stockCode, LocalDateTime timestamp) {
+        try {
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(BigDecimal.ZERO)
+                    .highPrice(BigDecimal.ZERO)
+                    .lowPrice(BigDecimal.ZERO)
+                    .closePrice(BigDecimal.ZERO)
+                    .volume(0L)
+                    .amount(0L)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+                log.info("KOSPI 종목 {}의 기본 데이터 저장 완료", stockCode);
+            }
+        } catch (Exception e) {
+            log.error("KOSPI 종목 {} 기본 데이터 저장 실패: {}", stockCode, e.getMessage());
         }
     }
     

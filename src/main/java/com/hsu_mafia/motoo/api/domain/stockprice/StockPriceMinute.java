@@ -3,6 +3,7 @@ package com.hsu_mafia.motoo.api.domain.stockprice;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "stock_price_minute")
 @Getter
+@Setter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @IdClass(StockPriceMinuteId.class)
 public class StockPriceMinute extends BaseEntity {
