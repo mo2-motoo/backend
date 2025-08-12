@@ -10,29 +10,67 @@ Order 도메인은 주식 주문 관리, 주문 상태 추적, 주문 매칭 시
 
 ```mermaid
 erDiagram
-    ORDER {
-        Long id PK
-        Long quantity
-        Long price
-        LocalDateTime createdAt
-        OrderType orderType
-        OrderStatus status
+    ORDERS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL, 주문수량"
+        decimal price "precision15scale4, 지정가"
+        datetime created_at "NOT NULL, 주문시각"
+        enum status "PENDING/COMPLETED/CANCELLED"
+        datetime updated_at
     }
 
-    USER {
-        Long id PK
-        String username
-        Long cash
+    USERS {
+        bigint id PK
+        varchar username UK "UNIQUE"
+        varchar email UK "UNIQUE"
+        bigint seed_money "초기투자금"
+        bigint cash "현재현금"
+        datetime join_at
+        datetime created_at
+        datetime updated_at
     }
 
-    STOCK {
-        String stockCode PK
-        String stockName
-        String marketType
+    STOCKS {
+        varchar stock_code PK "길이10"
+        varchar stock_name "NOT NULL"
+        varchar market_type "KOSPI/NASDAQ"
+        boolean is_active "DEFAULT true"
+        integer ranking
+        bigint industry_id FK
+        datetime created_at
+        datetime updated_at
     }
 
-    USER ||--o{ ORDER : "places"
-    STOCK ||--o{ ORDER : "targets"
+    EXECUTIONS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL, 체결수량"
+        decimal executed_price "precision15scale4, 체결가"
+        datetime executed_at "NOT NULL, 체결시각"
+        datetime created_at
+        datetime updated_at
+    }
+
+    USER_STOCKS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        bigint quantity "NOT NULL, 보유수량"
+        bigint average_buy_price "평단가"
+        datetime created_at
+        datetime updated_at
+    }
+
+    USERS ||--o{ ORDERS : "places"
+    STOCKS ||--o{ ORDERS : "targets"
+    ORDERS ||--o{ EXECUTIONS : "results_in"
+    USERS ||--o{ USER_STOCKS : "owns"
+    STOCKS ||--o{ USER_STOCKS : "held_by"
 ```
 
 <details>
@@ -65,8 +103,8 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private Long quantity;
 
-    @Column(nullable = false)
-    private Long price; // 지정가
+    @Column(nullable = false, precision = 15, scale = 4)
+    private BigDecimal price; // 지정가
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -146,39 +184,78 @@ graph TD
 
 **주요 엔드포인트:**
 
-- `POST /api/orders` - 주문 생성
-- `GET /api/orders` - 사용자별 주문 내역 조회 (페이지네이션 지원)
-- `DELETE /api/orders/{orderId}` - 주문 취소
+- `POST /api/v1/orders` - 주문 생성 (시장가/지정가 모두 지원)
+- `GET /api/v1/orders` - 사용자별 주문 내역 조회 (페이지네이션 지원)
+- `DELETE /api/v1/orders/{orderId}` - 주문 취소 (PENDING 상태만 가능)
 
 ## 📈 핵심 비즈니스 로직
 
-### 1. 주문 생성 로직
+### 1. 주문 생성 로직 (OrderService.placeOrder)
 
-주문 생성 시 다음과 같은 검증과 처리가 이루어집니다:
+실제 구현된 주문 생성 과정:
 
-1. **사용자 검증**: 유효한 사용자인지 확인
-2. **종목 검증**: 거래 가능한 종목인지 확인
-3. **잔고 검증**: 매수 시 충분한 현금, 매도 시 충분한 보유 주식 확인
-4. **주문 생성**: 검증 통과 시 Order Entity 생성
-5. **매칭 시도**: 즉시 매칭 가능한 주문이 있는지 확인
+```java
+@Transactional
+public void placeOrder(Long userId, OrderRequest request) {
+    // 1. 사용자 검증
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    
+    // 2. 종목 검증
+    Stock stock = stockRepository.findById(request.getStockId())
+        .orElseThrow(() -> new BaseException(ErrorCode.STOCK_NOT_FOUND));
+    
+    // 3. 매수/매도별 검증 로직
+    if (request.getOrderType() == OrderType.BUY) {
+        validateBuyOrder(user, request);
+    } else {
+        validateSellOrder(user, stock, request);
+    }
+    
+    // 4. Order Entity 생성 및 저장
+    Order order = Order.builder()
+        .user(user)
+        .stock(stock)
+        .orderType(request.getOrderType())
+        .quantity(request.getQuantity())
+        .price(request.getPrice()) // BigDecimal
+        .createdAt(LocalDateTime.now())
+        .status(OrderStatus.PENDING)
+        .build();
+    
+    orderRepository.save(order);
+    
+    // 5. 즉시 체결 시도
+    orderExecutionService.processOrder(order);
+}
+```
 
 ### 2. 주문 검증 로직
 
-주문 생성 시 다음과 같은 검증이 수행됩니다:
+종류별 상세 검증 로직:
 
-1. **사용자 검증**: 유효한 사용자인지 확인
-2. **종목 검증**: 거래 가능한 종목인지 확인
-3. **잔고 검증**: 매수 시 충분한 현금, 매도 시 충분한 보유 주식 확인
-4. **주문 상태 관리**: PENDING → COMPLETED/CANCELLED 상태 전이
+- **매수 주문 검증**: `user.getCash() >= request.getPrice() × request.getQuantity()`
+- **매도 주문 검증**: 보유 주식 수량 >= 주문 수량
+- **BigDecimal 정밀도**: 가격 계산 시 소수점 정확성 보장
+- **예외 처리**: BaseException과 사용자 정의 ErrorCode 활용
 
-### 3. 주문 상태 관리
+### 3. 주문 취소 로직 (OrderService.cancelOrder)
 
-주문은 다음과 같은 상태 전이를 거칩니다:
+주문 취소 시 수행되는 검증:
 
-```
-PENDING → COMPLETED (체결 완료)
-PENDING → CANCELLED (주문 취소)
-```
+1. **주문 존재 확인**: 주문 ID로 Order Entity 조회
+2. **소유자 검증**: 주문한 사용자와 요청자 일치 확인
+3. **상태 검증**: PENDING 상태인 주문만 취소 가능
+4. **상태 업데이트**: `order.updateStatus(OrderStatus.CANCELLED)`
+
+### 4. 주문 내역 조회 (페이지네이션)
+
+효율적인 주문 조회:
+
+- **페이지네이션**: `PageRequest.of(page, size)` 활용
+- **사용자별 필터링**: 특정 사용자의 주문만 조회
+- **정렬**: 생성 시간 기준 최신순 정렬
+- **DTO 매핑**: OrderMapper를 통한 Entity → DTO 변환
 
 <details>
 <summary>🔧 핵심 기술 구현</summary>
@@ -236,20 +313,28 @@ stateDiagram-v2
 
 ### 핵심 기능 구현 현황
 
-- [x] **주문 관리**: Order Entity 및 Repository 구현 완료
-- [x] **주문 생성 로직**: 매수/매도 주문 생성 및 검증 구현 완료
-- [x] **주문 상태 관리**: 상태 전이 및 업데이트 로직 구현 완료
-- [x] **API 엔드포인트**: 기본 CRUD API 구현 완료
-- [x] **페이지네이션**: 주문 내역 조회 시 페이지네이션 지원
-- [ ] **주문 매칭 엔진**: 가격-시간 우선순위 매칭 알고리즘 (향후 구현 예정)
-- [ ] **고급 주문 타입**: 시장가 주문, 조건부 주문 (향후 구현 예정)
-- [ ] **실시간 매칭**: WebSocket 기반 실시간 매칭 (향후 구현 예정)
+- [x] **Order Entity**: 완전한 Entity 구조 및 BigDecimal 가격 타입 구현
+- [x] **주문 생성**: OrderService.placeOrder() 완전 구현 (검증 → 생성 → 체결시도)
+- [x] **주문 취소**: OrderService.cancelOrder() 구현 (소유자/상태 검증)
+- [x] **주문 조회**: 페이지네이션 지원 주문 내역 조회 구현
+- [x] **검증 시스템**: 매수(현금)/매도(보유주식) 잔고 검증 완료
+- [x] **상태 관리**: PENDING → COMPLETED/CANCELLED 상태 전이 구현
+- [x] **API 엔드포인트**: `/api/v1/orders/*` 완전 구현
+- [x] **DTO 매핑**: OrderMapper를 통한 Entity ↔ DTO 변환
+- [x] **체결 연동**: OrderExecutionService와 연동하여 즉시 체결 시도
+- [x] **BigDecimal 정밀도**: 금융 거래의 소수점 정확성 보장
+- [ ] **주문 매칭 엔진**: 가격-시간 우선순위 자동 매칭 (향후 구현 예정)
+- [ ] **시장가 주문**: 현재가 기반 즉시 체결 (향후 구현 예정)
+- [ ] **조건부 주문**: 지정 조건 달성 시 자동 주문 (향후 구현 예정)
 
-### 데이터 무결성 검증
+### 데이터 무결성 및 에러 처리
 
-- [x] **주문 검증**: 가격, 수량, 잔고 유효성 검사
-- [x] **매칭 검증**: 매칭 조건 및 우선순위 검증
-- [x] **상태 관리**: 주문 상태 전이 규칙 검증
+- [x] **Entity 제약조건**: NOT NULL, ENUM 타입, BigDecimal precision 적용
+- [x] **트랜잭션 관리**: @Transactional 보장으로 주문-체결 원자성
+- [x] **예외 처리**: BaseException, ErrorCode 기반 체계적 에러 처리
+- [x] **검증 로직**: 사용자/종목/잔고 다단계 검증 시스템
+- [x] **상태 관리**: PENDING 상태만 취소 가능한 규칙 검증
+- [x] **성능 최적화**: 페이지네이션, Lazy Loading, Builder 패턴 활용
 
 ## 🛡️ 검증 및 에러 처리
 

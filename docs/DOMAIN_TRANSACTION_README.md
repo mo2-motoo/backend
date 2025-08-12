@@ -46,7 +46,7 @@ public class TransactionHistory extends BaseEntity {
 
     @Column(nullable = false, length = 100)
     private String description; // 예: "매수 체결", "입금", "퀴즈 보상" 등
-} 
+}
 ```
 
 </details>
@@ -187,7 +187,7 @@ graph TD
 
 ### 핵심 기능 구현 현황
 
-- [x] **거래 내역 관리**: TransactionHistory Entity 및 Repository 구현 완료
+- [x] **TransactionHistory Entity**: 완전한 Entity 구조 구현 완료
 - [x] **거래 내역 조회**: 사용자별, 설명별, 기간별 거래 내역 조회 구현 완료
 - [x] **페이지네이션**: 대용량 거래 내역 조회 시 페이지네이션 지원
 - [x] **내부 서비스**: TransactionService를 통한 거래 내역 관리 구현 완료
