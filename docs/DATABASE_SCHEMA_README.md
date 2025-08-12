@@ -2,7 +2,7 @@
 
 ## 📊 Database Entity Relationship Diagram
 
-#### pdf url
+
 [ERDCloud URL](https://github.com/mo2-motoo/backend/blob/main/docs/Motoo_ERD.pdf)
 
 <details>
@@ -12,68 +12,68 @@
 erDiagram
     users {
         bigint id PK
-        varchar username UK
-        varchar email UK
-        bigint seed_money
-        bigint cash
-        datetime join_at
+        varchar username UK "NOT NULL, UNIQUE"
+        varchar email UK "NOT NULL, UNIQUE"
+        bigint seed_money "NOT NULL"
+        bigint cash "NOT NULL"
+        datetime join_at "NOT NULL"
         datetime created_at
         datetime updated_at
     }
 
     industries {
         bigint id PK
-        varchar name
+        varchar name "NOT NULL"
         datetime created_at
         datetime updated_at
     }
 
     stocks {
-        varchar stock_code PK
-        varchar stock_name
+        varchar stock_code PK "길이10"
+        varchar stock_name "NOT NULL"
         varchar outline
-        varchar market_type
-        boolean is_active
-        int ranking
+        varchar market_type "KOSPI/NASDAQ"
+        boolean is_active "NOT NULL, DEFAULT true"
+        integer ranking
         bigint industry_id FK
         datetime created_at
         datetime updated_at
     }
 
     stock_price_minute {
-        varchar stock_code PK,FK
+        varchar stock_code PK,FK "길이10"
         datetime timestamp PK
-        bigint open_price
-        bigint high_price
-        bigint low_price
-        bigint close_price
-        bigint volume
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
         bigint amount
         datetime created_at
         datetime updated_at
     }
 
     stock_price_hour {
-        varchar stock_code PK,FK
+        varchar stock_code PK,FK "길이10"
         datetime timestamp PK
-        bigint open_price
-        bigint high_price
-        bigint low_price
-        bigint close_price
-        bigint volume
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
         bigint amount
         datetime created_at
         datetime updated_at
     }
 
     stock_price_daily {
-        varchar stock_code PK,FK
+        varchar stock_code PK,FK "길이10"
         date date PK
-        bigint open_price
-        bigint high_price
-        bigint low_price
-        bigint close_price
-        bigint volume
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
         bigint amount
         datetime created_at
         datetime updated_at
@@ -81,23 +81,23 @@ erDiagram
 
     financial_statements {
         bigint id PK
-        varchar stock_code FK
-        date report_date
-        varchar report_type
-        bigint revenue
-        bigint operating_income
-        bigint net_income
-        bigint total_assets
-        bigint total_equity
-        bigint total_liabilities
-        bigint total_shares
-        bigint outstanding_shares
-        double eps
-        double bps
-        double per
-        double pbr
-        double roe
-        double debt_ratio
+        varchar stock_code FK "referencedColumnName=stock_code"
+        date report_date "NOT NULL"
+        varchar report_type "QUARTERLY/ANNUAL"
+        bigint revenue "매출액"
+        bigint operating_income "영업이익"
+        bigint net_income "당기순이익"
+        bigint total_assets "총자산"
+        bigint total_equity "자기자본"
+        bigint total_liabilities "총부채"
+        bigint total_shares "총주식수"
+        bigint outstanding_shares "상장주식수"
+        double eps "주당순이익"
+        double bps "주당순자산"
+        double per "주가수익비율"
+        double pbr "주가순자산비율"
+        double roe "자기자본이익률"
+        double debt_ratio "부채비율"
         datetime created_at
         datetime updated_at
     }
@@ -105,24 +105,23 @@ erDiagram
     orders {
         bigint id PK
         bigint user_id FK
-        bigint stock_id FK
-        varchar order_type
-        bigint quantity
-        bigint price
-        datetime created_at
-        varchar status
-        datetime created_at
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal price "precision15scale4, 지정가"
+        datetime created_at "NOT NULL"
+        enum status "PENDING/COMPLETED/CANCELLED"
         datetime updated_at
     }
 
     executions {
         bigint id PK
         bigint user_id FK
-        bigint stock_id FK
-        varchar order_type
-        bigint quantity
-        bigint executed_price
-        datetime executed_at
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal executed_price "precision15scale4"
+        datetime executed_at "NOT NULL"
         datetime created_at
         datetime updated_at
     }
@@ -130,24 +129,24 @@ erDiagram
     user_stocks {
         bigint id PK
         bigint user_id FK
-        bigint stock_id FK
-        bigint quantity
-        bigint average_buy_price
+        varchar stock_id FK "Stock Entity 참조"
+        bigint quantity "NOT NULL"
+        bigint average_buy_price "평단가"
         datetime created_at
         datetime updated_at
     }
 
     tokens {
         bigint id PK
-        text access_token
+        varchar access_token "길이2000"
         datetime expiration
     }
 
     transaction_histories {
         bigint id PK
         bigint user_id FK
-        bigint amount
-        varchar description
+        bigint amount "NOT NULL"
+        varchar description "거래 설명"
         datetime created_at
         datetime updated_at
     }
@@ -168,12 +167,15 @@ erDiagram
     stocks ||--o{ executions : "traded_in"
     stocks ||--o{ user_stocks : "held_by"
 
-    orders ||--|| executions : "results_in"
+    orders ||--o{ executions : "results_in"
 ```
 
 </details>
 
 ## 🗄️ Database DDL (Data Definition Language)
+
+<details>
+<summary>📝 DDL 스크립트 보기/숨기기</summary>
 
 ```sql
 -- Users table
@@ -214,10 +216,10 @@ CREATE TABLE stocks (
 CREATE TABLE stock_price_minute (
     stock_code VARCHAR(10) NOT NULL,
     timestamp DATETIME NOT NULL,
-    open_price BIGINT NOT NULL,
-    high_price BIGINT NOT NULL,
-    low_price BIGINT NOT NULL,
-    close_price BIGINT NOT NULL,
+    open_price DECIMAL(15,4) NOT NULL,
+    high_price DECIMAL(15,4) NOT NULL,
+    low_price DECIMAL(15,4) NOT NULL,
+    close_price DECIMAL(15,4) NOT NULL,
     volume BIGINT NOT NULL,
     amount BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -230,10 +232,10 @@ CREATE TABLE stock_price_minute (
 CREATE TABLE stock_price_hour (
     stock_code VARCHAR(10) NOT NULL,
     timestamp DATETIME NOT NULL,
-    open_price BIGINT NOT NULL,
-    high_price BIGINT NOT NULL,
-    low_price BIGINT NOT NULL,
-    close_price BIGINT NOT NULL,
+    open_price DECIMAL(15,4) NOT NULL,
+    high_price DECIMAL(15,4) NOT NULL,
+    low_price DECIMAL(15,4) NOT NULL,
+    close_price DECIMAL(15,4) NOT NULL,
     volume BIGINT NOT NULL,
     amount BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -246,10 +248,10 @@ CREATE TABLE stock_price_hour (
 CREATE TABLE stock_price_daily (
     stock_code VARCHAR(10) NOT NULL,
     date DATE NOT NULL,
-    open_price BIGINT NOT NULL,
-    high_price BIGINT NOT NULL,
-    low_price BIGINT NOT NULL,
-    close_price BIGINT NOT NULL,
+    open_price DECIMAL(15,4) NOT NULL,
+    high_price DECIMAL(15,4) NOT NULL,
+    low_price DECIMAL(15,4) NOT NULL,
+    close_price DECIMAL(15,4) NOT NULL,
     volume BIGINT NOT NULL,
     amount BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -287,13 +289,12 @@ CREATE TABLE financial_statements (
 CREATE TABLE orders (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    stock_id BIGINT NOT NULL,
-    order_type VARCHAR(10) NOT NULL,
+    stock_id VARCHAR(10) NOT NULL,
+    order_type ENUM('BUY', 'SELL') NOT NULL,
     quantity BIGINT NOT NULL,
-    price BIGINT NOT NULL,
+    price DECIMAL(15,4) NOT NULL,
     created_at DATETIME NOT NULL,
-    status VARCHAR(15) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('PENDING', 'COMPLETED', 'CANCELLED') NOT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (stock_id) REFERENCES stocks(stock_code)
@@ -303,10 +304,10 @@ CREATE TABLE orders (
 CREATE TABLE executions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    stock_id BIGINT NOT NULL,
-    order_type VARCHAR(10) NOT NULL,
+    stock_id VARCHAR(10) NOT NULL,
+    order_type ENUM('BUY', 'SELL') NOT NULL,
     quantity BIGINT NOT NULL,
-    executed_price BIGINT NOT NULL,
+    executed_price DECIMAL(15,4) NOT NULL,
     executed_at DATETIME NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -318,7 +319,7 @@ CREATE TABLE executions (
 CREATE TABLE user_stocks (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    stock_id BIGINT NOT NULL,
+    stock_id VARCHAR(10) NOT NULL,
     quantity BIGINT NOT NULL,
     average_buy_price BIGINT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -328,14 +329,14 @@ CREATE TABLE user_stocks (
 );
 
 -- Tokens table
-CREATE TABLE tokens (
+CREATE TABLE token (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    access_token LONGTEXT,
+    access_token VARCHAR(2000),
     expiration DATETIME
 );
 
--- Transaction Histories table
-CREATE TABLE transaction_histories (
+-- Transaction History table
+CREATE TABLE transaction_history (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     amount BIGINT NOT NULL,
@@ -356,6 +357,8 @@ CREATE INDEX idx_orders_user_status ON orders(user_id, status);
 CREATE INDEX idx_executions_user ON executions(user_id);
 CREATE INDEX idx_user_stocks_user ON user_stocks(user_id);
 ```
+
+</details>
 
 ## 🎯 핵심 설계 포인트
 
@@ -458,11 +461,17 @@ public abstract class BaseEntity {
 
 ### 8. **데이터 타입 선택**
 
-**BIGINT 사용 이유**
+**BigDecimal (DECIMAL(15,4)) 사용 이유**
 
-- **주식 가격**: 한국 주식은 최대 1,000,000원까지 가능
-- **거래량**: 대용량 거래량 처리
-- **재무 데이터**: 대규모 기업의 재무 데이터
+- **정밀도 보장**: 주식 가격의 소수점 정확성 확보
+- **해외 주식 지원**: NASDAQ 등 달러 기반 소수점 가격
+- **재무 계산 정확성**: 수익률, 평단가 계산 시 정밀도 필수
+- **API 연동**: 한국투자증권 API에서 제공하는 소수점 데이터 지원
+
+**BIGINT vs BigDecimal 선택 기준**
+
+- **BigDecimal**: 주식 가격, 주문 가격, 체결 가격
+- **BIGINT**: 거래량, 수량, 현금 잔고, 재무 데이터 (원 단위)
 
 ## 🔄 데이터 플로우
 

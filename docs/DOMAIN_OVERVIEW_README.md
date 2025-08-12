@@ -10,83 +10,164 @@ Motoo는 한국투자증권 API를 활용한 주식 투자 플랫폼으로, 실�
 
 ```mermaid
 erDiagram
-    USER {
-        Long id PK
-        String username
-        String email
-        Long cash
-        Long seedMoney
+    USERS {
+        bigint id PK
+        varchar username UK "UNIQUE, NOT NULL"
+        varchar email UK "UNIQUE, NOT NULL"
+        bigint seed_money "NOT NULL"
+        bigint cash "NOT NULL"
+        datetime join_at "NOT NULL"
+        datetime created_at
+        datetime updated_at
     }
 
-    STOCK {
-        String stockCode PK
-        String stockName
-        String marketType
-        Boolean isActive
-        Integer ranking
+    INDUSTRIES {
+        bigint id PK
+        varchar name "NOT NULL"
+        datetime created_at
+        datetime updated_at
     }
 
-    USER_STOCK {
-        Long id PK
-        Long quantity
-        Long averageBuyPrice
+    STOCKS {
+        varchar stock_code PK "길이10"
+        varchar stock_name "NOT NULL"
+        varchar outline
+        varchar market_type "KOSPI/NASDAQ"
+        boolean is_active "DEFAULT true"
+        integer ranking
+        bigint industry_id FK
+        datetime created_at
+        datetime updated_at
     }
 
-    ORDER {
-        Long id PK
-        Long quantity
-        Long price
-        OrderType orderType
-        OrderStatus status
+    USER_STOCKS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        bigint quantity "NOT NULL"
+        bigint average_buy_price "평단가"
+        datetime created_at
+        datetime updated_at
     }
 
-    EXECUTION {
-        Long id PK
-        Long quantity
-        Long executedPrice
-        LocalDateTime executedAt
+    ORDERS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal price "precision15scale4"
+        datetime created_at "NOT NULL"
+        enum status "PENDING/COMPLETED/CANCELLED"
+        datetime updated_at
+    }
+
+    EXECUTIONS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal executed_price "precision15scale4"
+        datetime executed_at "NOT NULL"
+        datetime created_at
+        datetime updated_at
     }
 
     TRANSACTION_HISTORY {
-        Long id PK
-        Long amount
-        String description
+        bigint id PK
+        bigint user_id FK
+        bigint amount "NOT NULL"
+        varchar description "거래 설명"
+        datetime created_at
+        datetime updated_at
     }
 
     TOKEN {
-        Long id PK
-        String accessToken
-        LocalDateTime expiration
+        bigint id PK
+        varchar access_token "길이2000"
+        datetime expiration
     }
 
     STOCK_PRICE_MINUTE {
-        String stockCode PK
-        LocalDateTime timestamp PK
-        Long openPrice
-        Long closePrice
-        Long volume
+        varchar stock_code PK,FK "길이10"
+        datetime timestamp PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
+        bigint amount
+        datetime created_at
+        datetime updated_at
     }
 
-    FINANCIAL_STATEMENT {
-        Long id PK
-        LocalDate reportDate
-        String reportType
-        Long revenue
-        Long netIncome
-        Double eps
-        Double per
+    STOCK_PRICE_HOUR {
+        varchar stock_code PK,FK "길이10"
+        datetime timestamp PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
+        bigint amount
+        datetime created_at
+        datetime updated_at
     }
 
-    USER ||--o{ USER_STOCK : "owns"
-    USER ||--o{ ORDER : "places"
-    USER ||--o{ EXECUTION : "participates"
+    STOCK_PRICE_DAILY {
+        varchar stock_code PK,FK "길이10"
+        date date PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL"
+        bigint amount
+        datetime created_at
+        datetime updated_at
+    }
 
-    STOCK ||--o{ USER_STOCK : "held_by"
-    STOCK ||--o{ ORDER : "targeted_by"
-    STOCK ||--o{ STOCK_PRICE_MINUTE : "has"
-    STOCK ||--o{ FINANCIAL_STATEMENT : "has"
+    FINANCIAL_STATEMENTS {
+        bigint id PK
+        varchar stock_code FK "직접 참조"
+        date report_date "NOT NULL"
+        varchar report_type "QUARTERLY/ANNUAL"
+        bigint revenue "매출액"
+        bigint operating_income "영업이익"
+        bigint net_income "당기순이익"
+        bigint total_assets "총자산"
+        bigint total_equity "자기자본"
+        bigint total_liabilities "총부채"
+        bigint total_shares "총주식수"
+        bigint outstanding_shares "상장주식수"
+        double eps "주당순이익"
+        double bps "주당순자산"
+        double per "주가수익비율"
+        double pbr "주가순자산비율"
+        double roe "자기자본이익률"
+        double debt_ratio "부채비율"
+        datetime created_at
+        datetime updated_at
+    }
 
-    ORDER ||--o{ EXECUTION : "results_in"
+    %% Relationships
+    USERS ||--o{ USER_STOCKS : "owns"
+    USERS ||--o{ ORDERS : "places"
+    USERS ||--o{ EXECUTIONS : "participates"
+    USERS ||--o{ TRANSACTION_HISTORY : "has"
+
+    INDUSTRIES ||--o{ STOCKS : "contains"
+
+    STOCKS ||--o{ USER_STOCKS : "held_by"
+    STOCKS ||--o{ ORDERS : "targeted_by"
+    STOCKS ||--o{ EXECUTIONS : "traded_in"
+    STOCKS ||--o{ STOCK_PRICE_MINUTE : "has"
+    STOCKS ||--o{ STOCK_PRICE_HOUR : "has"
+    STOCKS ||--o{ STOCK_PRICE_DAILY : "has"
+    STOCKS ||--o{ FINANCIAL_STATEMENTS : "has"
+
+    ORDERS ||--o{ EXECUTIONS : "results_in"
 ```
 
 ## 🔧 핵심 도메인 기능
@@ -241,33 +322,40 @@ TokenService → KisConfig → StockManagement
 
 ### 핵심 기능 구현 현황
 
-- [x] **사용자 관리**: 사용자 프로필 조회, 자산 계산
+- [x] **사용자 관리**: 사용자 프로필 조회, 자산 계산, 현금 관리
 - [x] **주식 관리**: 종목 정보, 시세 데이터 수집, 재무제표 관리
-- [x] **주문 시스템**: 주문 생성, 검증, 상태 관리
-- [x] **포트폴리오**: 보유 주식 관리, 실시간 가치 계산
-- [x] **거래 내역**: 거래 내역 조회 및 필터링
-- [x] **API 연동**: 한국투자증권 API 토큰 관리
-- [x] **스케줄링**: 정기적 데이터 수집 및 관리
-- [ ] **주문 매칭**: 가격-시간 우선순위 기반 주문 매칭
-- [ ] **실시간 기능**: WebSocket 기반 실시간 업데이트
-- [ ] **고급 분석**: AI 기반 투자 분석 및 예측
+- [x] **주문 시스템**: 주문 생성, 검증, 상태 관리 (PENDING/COMPLETED/CANCELLED)
+- [x] **체결 시스템**: 체결 내역 생성 및 관리
+- [x] **포트폴리오**: 보유 주식 관리, 실시간 가치 계산, 수익률 분석
+- [x] **거래 내역**: 사용자별 거래 내역 조회 및 필터링
+- [x] **API 연동**: 한국투자증권 API 토큰 자동 갱신 및 관리
+- [x] **스케줄링**: 정기적 데이터 수집 (분/시간/일봉), 종목 갱신
+- [x] **데이터 정밀도**: BigDecimal 기반 고정밀 주가 데이터 처리
+- [x] **WebSocket 준비**: WebSocket 클라이언트 구현 (연결 이슈로 REST API 폴링 방식 사용)
+- [ ] **주문 매칭**: 가격-시간 우선순위 기반 주문 매칭 엔진
+- [ ] **실시간 알림**: 체결/가격 변동 실시간 알림
+- [ ] **고급 분석**: 기술적 지표, AI 기반 투자 분석
 
 ### 시스템 통합 상태
 
-- [x] **도메인 연동**: 모든 도메인 간 데이터 연동
-- [x] **API 통합**: RESTful API 엔드포인트 통합
-- [x] **데이터 무결성**: 트랜잭션 관리 및 검증
-- [x] **에러 처리**: 통합된 예외 처리 및 로깅
-- [ ] **모니터링**: 시스템 성능 및 상태 모니터링
-- [ ] **알림 시스템**: 실시간 알림 및 경고
+- [x] **도메인 연동**: 모든 도메인 간 데이터 연동 (User ↔ Stock ↔ Order ↔ Execution ↔ Portfolio)
+- [x] **API 통합**: RESTful API 엔드포인트 통합 (`/api/v1/*` 통일)
+- [x] **데이터 무결성**: 트랜잭션 관리 및 검증, BigDecimal 정밀도 보장
+- [x] **에러 처리**: 통합된 예외 처리, Spring AOP 기반 로깅
+- [x] **스키마 일관성**: ERD와 실제 Entity 코드 일치, FK 관계 정립
+- [x] **JSON 처리**: snake_case ↔ camelCase 자동 변환
+- [ ] **성능 모니터링**: Micrometer/Actuator 기반 메트릭 수집
+- [ ] **실시간 알림**: WebSocket/SSE 기반 실시간 알림
 
 ## 🛡️ 시스템 보안 및 안정성
 
 ### 1. 데이터 보안
 
-- **비밀번호 암호화**: BCrypt 기반 안전한 비밀번호 저장
-- **JWT 토큰**: 안전한 사용자 인증 토큰 관리
-- **API 보안**: 한국투자증권 API 토큰 보안 관리
+- **API 토큰 보안**: 한국투자증권 API 토큰 안전한 저장 및 자동 갱신
+- **환경 변수 관리**: 민감한 설정 정보 환경 변수 분리
+- **데이터 검증**: 입력 데이터 유효성 검사 및 SQL Injection 방지
+- [ ] **사용자 인증**: JWT 기반 사용자 인증 시스템 (향후 구현 예정)
+- [ ] **비밀번호 암호화**: BCrypt 기반 비밀번호 해싱 (향후 구현 예정)
 
 ### 2. 데이터 무결성
 
@@ -300,9 +388,10 @@ TokenService → KisConfig → StockManagement
 
 ### 1. 기능 확장
 
-- **실시간 거래**: WebSocket 기반 실시간 주문 및 체결
+- **실시간 데이터**: WebSocket 연결 안정화 후 실시간 시세 업데이트
+- **주문 매칭 엔진**: 가격-시간 우선순위 기반 자동 매칭 시스템
 - **모바일 앱**: React Native 기반 모바일 애플리케이션
-- **웹 대시보드**: React 기반 실시간 대시보드
+- **웹 대시보드**: React 기반 실시간 포트폴리오 대시보드
 
 ### 2. 분석 기능
 

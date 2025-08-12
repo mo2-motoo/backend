@@ -13,7 +13,7 @@ erDiagram
     EXECUTION {
         Long id PK
         Long quantity
-        Long executedPrice
+        decimal executedPrice "precision15scale4"
         LocalDateTime executedAt
         OrderType orderType
     }
@@ -90,7 +90,7 @@ public class Execution extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDateTime executedAt;
-} 
+}
 ```
 
 </details>
@@ -246,7 +246,7 @@ graph TD
 
 ### 핵심 기능 구현 현황
 
-- [x] **체결 내역 관리**: Execution Entity 및 Repository 구현 완료
+- [x] **Execution Entity**: BigDecimal 기반 완전한 Entity 구조 구현 완료
 - [x] **체결 처리 로직**: 매수/매도 체결 처리 구현 완료
 - [x] **평단가 계산**: 실시간 평단가 계산 로직 구현 완료
 - [x] **투자 성과 분석**: 종목별 수익률 계산 구현 완료

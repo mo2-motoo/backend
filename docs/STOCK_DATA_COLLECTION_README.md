@@ -58,13 +58,13 @@
 #### KOSPI 200 종목 갱신
 
 ```http
-POST /api/stock-management/stocks/kospi200
+POST /api/v1/stock-management/stocks/kospi200
 ```
 
 #### NASDAQ 상위 종목 갱신
 
 ```http
-POST /api/stock-management/stocks/nasdaq
+POST /api/v1/stock-management/stocks/nasdaq
 ```
 
 #### 활성화된 종목 조회
@@ -116,19 +116,19 @@ POST /api/stock-management/test/e2e
 #### 주식 목록 조회
 
 ```http
-GET /api/stocks?page=0&size=20
+GET /api/v1/stocks?page=0&size=20
 ```
 
 #### 주식 상세 조회
 
 ```http
-GET /api/stocks/{stockCode}
+GET /api/v1/stocks/{stockCode}
 ```
 
 #### 주식 검색
 
 ```http
-POST /api/stocks/search
+POST /api/v1/stocks/search
 Content-Type: application/json
 
 {

@@ -10,70 +10,129 @@ Stock 도메인은 주식 종목 정보 관리, 시세 데이터 수집, 재무�
 
 ```mermaid
 erDiagram
-    STOCK {
-        String stockCode PK
-        String stockName
-        String outline
-        String marketType
-        Boolean isActive
-        Integer ranking
+    STOCKS {
+        varchar stock_code PK "길이10, 종목코드"
+        varchar stock_name "NOT NULL, 종목명"
+        varchar outline "종목개요"
+        varchar market_type "KOSPI/NASDAQ"
+        boolean is_active "NOT NULL, DEFAULT true"
+        integer ranking "시장내순위"
+        bigint industry_id FK
+        datetime created_at
+        datetime updated_at
     }
 
-    INDUSTRY {
-        Long id PK
-        String name
+    INDUSTRIES {
+        bigint id PK
+        varchar name "NOT NULL, 산업명"
+        datetime created_at
+        datetime updated_at
     }
 
     STOCK_PRICE_MINUTE {
-        String stockCode PK
-        LocalDateTime timestamp PK
-        Long openPrice
-        Long highPrice
-        Long lowPrice
-        Long closePrice
-        Long volume
-        Long amount
+        varchar stock_code PK,FK "길이10"
+        datetime timestamp PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL, 거래량"
+        bigint amount "거래대금"
+        datetime created_at
+        datetime updated_at
     }
 
     STOCK_PRICE_HOUR {
-        String stockCode PK
-        LocalDateTime timestamp PK
-        Long openPrice
-        Long highPrice
-        Long lowPrice
-        Long closePrice
-        Long volume
-        Long amount
+        varchar stock_code PK,FK "길이10"
+        datetime timestamp PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL, 거래량"
+        bigint amount "거래대금"
+        datetime created_at
+        datetime updated_at
     }
 
     STOCK_PRICE_DAILY {
-        String stockCode PK
-        LocalDate date PK
-        Long openPrice
-        Long highPrice
-        Long lowPrice
-        Long closePrice
-        Long volume
-        Long amount
+        varchar stock_code PK,FK "길이10"
+        date date PK
+        decimal open_price "precision15scale4"
+        decimal high_price "precision15scale4"
+        decimal low_price "precision15scale4"
+        decimal close_price "precision15scale4"
+        bigint volume "NOT NULL, 거래량"
+        bigint amount "거래대금"
+        datetime created_at
+        datetime updated_at
     }
 
-    FINANCIAL_STATEMENT {
-        Long id PK
-        LocalDate reportDate
-        String reportType
-        Long revenue
-        Long netIncome
-        Long totalAssets
-        Double eps
-        Double per
-        Double pbr
+    FINANCIAL_STATEMENTS {
+        bigint id PK
+        varchar stock_code FK "직접참조"
+        date report_date "NOT NULL"
+        varchar report_type "QUARTERLY/ANNUAL"
+        bigint revenue "매출액"
+        bigint operating_income "영업이익"
+        bigint net_income "당기순이익"
+        bigint total_assets "총자산"
+        bigint total_equity "자기자본"
+        bigint total_liabilities "총부채"
+        bigint total_shares "총주식수"
+        bigint outstanding_shares "상장주식수"
+        double eps "주당순이익"
+        double bps "주당순자산"
+        double per "주가수익비율"
+        double pbr "주가순자산비율"
+        double roe "자기자본이익률"
+        double debt_ratio "부채비율"
+        datetime created_at
+        datetime updated_at
     }
 
-    INDUSTRY ||--o{ STOCK : "contains"
-    STOCK ||--o{ STOCK_PRICE_MINUTE : "has"
-    STOCK ||--o{ STOCK_PRICE_HOUR : "has"
-    STOCK ||--o{ STOCK_PRICE_DAILY : "has"
-    STOCK ||--o{ FINANCIAL_STATEMENT : "has"
+    USER_STOCKS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        bigint quantity "NOT NULL"
+        bigint average_buy_price "평단가"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ORDERS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal price "precision15scale4"
+        enum status "PENDING/COMPLETED/CANCELLED"
+        datetime created_at
+        datetime updated_at
+    }
+
+    EXECUTIONS {
+        bigint id PK
+        bigint user_id FK
+        varchar stock_id FK "Stock Entity 참조"
+        enum order_type "BUY/SELL"
+        bigint quantity "NOT NULL"
+        decimal executed_price "precision15scale4"
+        datetime executed_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    INDUSTRIES ||--o{ STOCKS : "contains"
+    STOCKS ||--o{ STOCK_PRICE_MINUTE : "has"
+    STOCKS ||--o{ STOCK_PRICE_HOUR : "has"
+    STOCKS ||--o{ STOCK_PRICE_DAILY : "has"
+    STOCKS ||--o{ FINANCIAL_STATEMENTS : "has"
+    STOCKS ||--o{ USER_STOCKS : "held_by"
+    STOCKS ||--o{ ORDERS : "targeted_by"
+    STOCKS ||--o{ EXECUTIONS : "traded_in"
 ```
 
 <details>
@@ -136,7 +195,7 @@ public class Stock extends BaseEntity {
     public void setActive(Boolean isActive) {
         this.isActive = isActive;
     }
-} 
+}
 ```
 
 </details>
@@ -205,9 +264,9 @@ graph TD
 
 **주요 엔드포인트:**
 
-- `GET /api/stocks` - 주식 목록 조회 (페이지네이션 지원)
-- `GET /api/stocks/{stockCode}` - 종목 상세 정보
-- `POST /api/stocks/search` - 종목 검색 (키워드, 시장타입, 산업별)
+- `GET /api/v1/stocks` - 주식 목록 조회 (페이지네이션 지원, 실시간 가격 포함)
+- `GET /api/v1/stocks/{stockCode}` - 종목 상세 정보 (현재가, 수익률 포함)
+- `POST /api/v1/stocks/search` - 종목 검색 (키워드, 시장타입, 산업별)
 
 ### Stock Management API
 
@@ -215,45 +274,79 @@ graph TD
 
 **관리 엔드포인트:**
 
-- `POST /api/stock-management/stocks/kospi200` - KOSPI 200 종목 갱신
-- `POST /api/stock-management/stocks/nasdaq` - NASDAQ 상위 종목 갱신
-- `GET /api/stock-management/stocks/active` - 활성화된 종목 조회
-- `PUT /api/stock-management/stocks/{stockCode}/active` - 종목 활성화 상태 변경
-- `POST /api/stock-management/data/collect/minute` - 1분봉 데이터 수집
-- `POST /api/stock-management/data/aggregate/hour` - 1시간봉 데이터 집계
-- `POST /api/stock-management/data/aggregate/daily` - 1일봉 데이터 집계
-- `POST /api/stock-management/data/collect/financial` - 재무제표 데이터 수집
-- `POST /api/stock-management/test/e2e` - E2E 테스트
+- `POST /api/v1/stock-management/stocks/kospi200` - KOSPI 200 종목 갱신
+- `POST /api/v1/stock-management/stocks/nasdaq` - NASDAQ 상위 종목 갱신
+- `GET /api/v1/stock-management/stocks/active` - 활성화된 종목 조회
+- `PUT /api/v1/stock-management/stocks/{stockCode}/active` - 종목 활성화 상태 변경
+- `POST /api/v1/stock-management/data/collect/minute` - 1분봉 데이터 수집
+- `POST /api/v1/stock-management/data/aggregate/hour` - 1시간봉 데이터 집계
+- `POST /api/v1/stock-management/data/aggregate/daily` - 1일봉 데이터 집계
+- `POST /api/v1/stock-management/data/collect/financial` - 재무제표 데이터 수집
+- `POST /api/v1/stock-management/test/e2e` - E2E 테스트
+
+### WebSocket API
+
+**실시간 데이터 엔드포인트:**
+
+- `GET /api/v1/websocket/status` - WebSocket 연결 상태 조회
+- `POST /api/v1/websocket/subscribe/{stockCode}` - 특정 종목 실시간 데이터 구독
 
 ## 📈 핵심 비즈니스 로직
 
-### 1. 시세 데이터 수집 로직
+### 1. 실시간 주식 데이터 조회 로직
 
-시세 데이터 수집은 다음과 같은 단계로 진행됩니다:
+StockController에서 구현된 실시간 데이터 조회:
 
-1. **활성 종목 조회**: 데이터 수집 대상 종목 목록 조회
-2. **API 호출**: 한국투자증권 API를 통한 실시간 시세 조회
-3. **데이터 저장**: 1분봉 데이터 저장
-4. **데이터 집계**: 1시간봉, 1일봉 데이터 집계
-5. **데이터 검증**: 수집된 데이터의 유효성 검사
+```java
+// 주식 목록 조회 시 실시간 가격 포함
+List<StockResponse> stockResponses = stocks.stream()
+    .map(stock -> {
+        StockResponse stockResponse = stockMapper.toStockResponse(stock);
+        
+        // PriceUtil을 통한 실시간 현재가 조회
+        BigDecimal currentPrice = priceUtil.getCurrentPrice(stock.getStockCode());
+        BigDecimal changeRate = priceUtil.getChangeRate(stock.getStockCode());
+        
+        // Builder 패턴으로 응답 구성
+        return StockResponse.builder()
+            .stockCode(stockResponse.getStockCode())
+            .stockName(stockResponse.getStockName())
+            .currentPrice(currentPrice)
+            .changeRate(changeRate)
+            .build();
+    })
+    .collect(Collectors.toList());
+```
 
-### 2. 종목 관리 로직
+### 2. 시세 데이터 수집 및 저장 로직
 
-종목 관리 시스템은 다음과 같이 작동합니다:
+StockDataCollectionService의 핵심 로직:
 
-1. **종목 정보 수집**: KOSPI 200, NASDAQ 상위 종목 정보 수집
-2. **종목 비교**: 기존 DB와 신규 종목 정보 비교
-3. **종목 업데이트**: 신규 종목 추가, 기존 종목 정보 업데이트
-4. **랭킹 관리**: 시장 내 순위 정보 업데이트
+1. **활성 종목 조회**: `stockRepository.findActiveStocksByMarketType()`
+2. **스케줄링 실행**: 평일 거래시간 중 매분 실행
+3. **API 호출**: 한국투자증권 API를 통한 분봉 데이터 수집
+4. **BigDecimal 저장**: 정밀도 보장을 위한 DECIMAL(15,4) 타입 사용
+5. **데이터 집계**: 분봉 → 시간봉 → 일봉 자동 집계
+6. **에러 처리**: API 제한 시 Thread.sleep() 및 재시도
 
-### 3. 재무지표 계산
+### 3. 종목 검색 및 필터링
 
-재무제표 데이터를 기반으로 다음과 같은 지표를 계산합니다:
+종목 검색 시스템의 고급 기능:
 
-- **EPS (주당순이익)**: 순이익 / 발행주식수
-- **PER (주가수익비율)**: 현재가 / EPS
-- **PBR (주가순자산비율)**: 현재가 / BPS
-- **ROE (자기자본이익률)**: 순이익 / 자기자본
+- **키워드 검색**: 종목명, 종목코드 기반 검색
+- **시장별 필터링**: KOSPI/NASDAQ 시장 구분
+- **산업별 필터링**: Industry Entity와 연동
+- **페이지네이션**: 대량 데이터 효율적 조회
+- **실시간 가격 연동**: 검색 결과에 현재가 정보 포함
+
+### 4. BigDecimal 기반 정밀 계산
+
+금융 데이터의 정확성을 위한 BigDecimal 활용:
+
+- **주가 데이터**: DECIMAL(15,4) 타입으로 소수점 4자리 정밀도
+- **수익률 계산**: 부동소수점 오차 방지
+- **해외 주식 지원**: NASDAQ 등 달러 기반 소수점 가격 지원
+- **API 호환성**: 한국투자증권 API 응답 데이터와 완벽 호환
 
 <details>
 <summary>🔧 핵심 기술 구현</summary>
@@ -306,22 +399,29 @@ graph TD
 
 ### 핵심 기능 구현 현황
 
-- [x] **종목 관리**: Stock Entity 및 Repository 구현 완료
-- [x] **시세 데이터 수집**: 1분봉, 1시간봉, 1일봉 수집 로직 구현 완료
-- [x] **한국투자증권 API 연동**: 토큰 관리 및 API 호출 구현 완료
-- [x] **스케줄링**: 정기적 데이터 수집 스케줄러 구현 완료
-- [x] **재무제표 관리**: FinancialStatement Entity 및 수집 로직 구현 완료
-- [x] **API 엔드포인트**: 기본 Stock API 및 관리 API 구현 완료
-- [x] **종목 검색**: 키워드, 시장타입, 산업별 검색 기능 구현 완료
-- [x] **실시간 가격 정보**: PriceUtil을 통한 현재가, 수익률 등 실시간 정보 제공
-- [ ] **고급 분석 기능**: 기술적 지표, 기본적 분석 (향후 구현 예정)
-- [ ] **실시간 데이터**: WebSocket 기반 실시간 시세 (향후 구현 예정)
+- [x] **Stock Entity**: 완전한 Entity 구조 및 연관관계 구현 완료
+- [x] **시세 데이터 수집**: BigDecimal 기반 고정밀 1분봉/시간봉/일봉 수집 완료
+- [x] **실시간 API 연동**: StockController에서 PriceUtil 통한 실시간 가격 조회
+- [x] **스케줄링 시스템**: StockSchedulerService/StockDataCollectionService 완료
+- [x] **종목 관리 시스템**: KOSPI200/NASDAQ 종목 자동 갱신 및 활성화 관리
+- [x] **검색 기능**: 키워드, 시장타입, 산업별 고급 검색 기능 완료
+- [x] **페이지네이션**: 대량 데이터 효율적 조회 지원
+- [x] **API 엔드포인트**: `/api/v1/stocks/*` 완전 구현
+- [x] **데이터 정밀도**: BigDecimal(15,4) 기반 금융 데이터 정확성 보장
+- [x] **WebSocket 준비**: 실시간 데이터 구독 API 구현 (연결 이슈 해결 필요)
+- [x] **재무제표 Entity**: FinancialStatement 구조 완료
+- [ ] **재무제표 수집**: 분기별/연간 재무데이터 자동 수집 (향후 구현 예정)
+- [ ] **기술적 지표**: 이동평균, RSI, MACD 등 (향후 구현 예정)
+- [ ] **WebSocket 안정화**: 실시간 시세 스트리밍 (연결 문제 해결 후)
 
-### 데이터 무결성 검증
+### 데이터 무결성 및 성능
 
-- [x] **시세 데이터 검증**: 가격, 거래량 유효성 검사
-- [x] **종목 정보 검증**: 종목코드, 종목명 유효성 검사
-- [x] **재무제표 검증**: 재무 데이터 유효성 검사
+- [x] **Entity 제약조건**: NOT NULL, 복합키(stock_code + timestamp) 적용
+- [x] **BigDecimal 정밀도**: 부동소수점 오차 방지, 금융 계산 정확성
+- [x] **API 에러 처리**: BaseException, 사용자 정의 ErrorCode 적용  
+- [x] **트랜잭션 관리**: @Transactional 적용, 데이터 일관성 보장
+- [x] **성능 최적화**: 페이지네이션, Stream API, Builder 패턴 활용
+- [x] **스케줄링 최적화**: ThreadPoolTaskScheduler 활용, API 호출 제한 고려
 
 ## 🛡️ 에러 처리
 
