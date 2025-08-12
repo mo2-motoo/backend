@@ -161,10 +161,16 @@ public class TokenService {
 
             Token token = tokenMapper.toToken(Objects.requireNonNull(response.getBody()));
             log.info("매핑된 Token 엔티티: {}", token);
-            tokenRepository.save(token);
+            log.info("매핑된 Token accessToken: {}", token.getAccessToken());
+            log.info("매핑된 Token expiration: {}", token.getExpiration());
+            
+            Token savedToken = tokenRepository.save(token);
+            log.info("저장된 Token ID: {}", savedToken.getId());
+            log.info("저장된 Token accessToken: {}", savedToken.getAccessToken());
+            log.info("저장된 Token expiration: {}", savedToken.getExpiration());
 
             log.info("새로운 토큰을 발급받았습니다: {}, 만료기간: {}",
-                    token.getAccessToken(), token.getExpiration());
+                    savedToken.getAccessToken(), savedToken.getExpiration());
 
         } catch (Exception e) {
             log.error("토큰 발급 API 호출 중 오류: {}", e.getMessage());

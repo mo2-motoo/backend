@@ -20,8 +20,18 @@ public interface TokenMapper {
     @Named("stringToLocalDateTime")
     static LocalDateTime stringToLocalDateTime(String dateTimeStr) {
         if (dateTimeStr == null) return null;
-        // 예시: "2024-07-09 12:34:56" 형식
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.parse(dateTimeStr, formatter);
+        try {
+            // 한국투자증권 API 응답 형식에 맞춰 파싱
+            // 예시: "2024-07-09 12:34:56" 또는 "2024-07-09T12:34:56" 형식
+            if (dateTimeStr.contains("T")) {
+                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } else {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                return LocalDateTime.parse(dateTimeStr, formatter);
+            }
+        } catch (Exception e) {
+            // 파싱 실패 시 현재 시간 + 1시간으로 설정
+            return LocalDateTime.now().plusHours(1);
+        }
     }
 }

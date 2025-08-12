@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/token")
+@RequestMapping("/api/v1/token")
 @RequiredArgsConstructor
 @Tag(name = "Token", description = "한국투자증권 API 토큰 관리")
 public class TokenController {
