@@ -2,6 +2,7 @@
 
 ## 📊 Database Entity Relationship Diagram
 
+<img width="2800" height="2622" alt="image" src="https://github.com/user-attachments/assets/9429465c-6f76-4391-9f08-01a917608eee" />
 
 [ERDCloud URL](https://github.com/mo2-motoo/backend/blob/main/docs/Motoo_ERD.pdf)
 
