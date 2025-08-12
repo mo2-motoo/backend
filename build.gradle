@@ -45,6 +45,10 @@ dependencies {
 	// Swagger UI 자동 문서화
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 	
+	// WebSocket 클라이언트
+//	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+//	implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+	
 	// AOP
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 
