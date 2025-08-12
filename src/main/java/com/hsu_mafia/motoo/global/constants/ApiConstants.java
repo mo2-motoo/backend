@@ -20,6 +20,9 @@ public final class ApiConstants {
     // 해외주식 API
     public static final String KIS_OVERSEAS_STOCK_PRICE_URL = KIS_BASE_URL + "/uapi/overseas-price/v1/quotations/price";
     
+    // 웹소켓 API
+    public static final String KIS_WEBSOCKET_URL = "wss://openapi.koreainvestment.com:9443/websocket";
+    
     // API 헤더 상수
     public static final String HEADER_AUTHORIZATION = "Authorization";
     public static final String HEADER_APPKEY = "appkey";
