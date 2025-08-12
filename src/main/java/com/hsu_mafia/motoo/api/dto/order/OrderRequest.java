@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,7 +16,7 @@ public class OrderRequest {
     private String stockId;
     private OrderType orderType;
     private Long quantity;
-    private Long price;
+    private BigDecimal price;
     private Boolean marketOrder;
 
     public boolean isMarketOrder() {

@@ -21,7 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RestController
-@RequestMapping("/api/portfolio")
+@RequestMapping("/api/v1/portfolio")
 @RequiredArgsConstructor
 public class PortfolioController {
     private final PortfolioService portfolioService;
@@ -32,9 +32,7 @@ public class PortfolioController {
     @Operation(
     summary = "포트폴리오 조회",
     description = "사용자의 전체 자산, 보유 주식, 수익률 등 포트폴리오 정보를 조회합니다.")
-    public ResponseEntity<CommonResponse<PortfolioDto>> getPortfolio(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<CommonResponse<PortfolioDto>> getPortfolio(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Long userId = 1L; // TODO: 실제 인증된 사용자 ID로 변경
         User user = portfolioService.getPortfolio(userId);
         

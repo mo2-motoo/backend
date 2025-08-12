@@ -3,6 +3,7 @@ package com.hsu_mafia.motoo.global.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hsu_mafia.motoo.global.config.KisConfig;
+import com.hsu_mafia.motoo.global.constants.ApiConstants;
 import com.hsu_mafia.motoo.global.dto.StockPriceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,7 @@ public class MockOrderController {
             """, kisConfig.getAppKey(), kisConfig.getAppSecret());
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(kisConfig.getBaseUrl() + "/oauth2/tokenP"))
+                .uri(URI.create(ApiConstants.KIS_TOKEN_URL))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
@@ -58,7 +59,7 @@ public class MockOrderController {
     private StockPriceResponse fetchCurrentPrice(String token) throws Exception {
         String stockCode = "005930";
         String url = UriComponentsBuilder
-                .fromHttpUrl(kisConfig.getBaseUrl() + "/uapi/domestic-stock/v1/quotations/inquire-price")
+                .fromHttpUrl(ApiConstants.KIS_DOMESTIC_STOCK_PRICE_URL)
                 .queryParam("fid_cond_mrkt_div_code", "J")
                 .queryParam("fid_input_iscd", stockCode)
                 .toUriString();

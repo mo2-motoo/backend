@@ -18,7 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
@@ -35,15 +35,16 @@ public class OrderController {
 
     @GetMapping
     @Operation(summary = "주문 내역 조회", description = "사용자의 전체 주문 내역을 조회합니다.")
-    public ResponseEntity<CommonResponse<List<OrderResponse>>> getOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<CommonResponse<List<OrderResponse>>> getOrders(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Long userId = 1L; // TODO: 실제 인증된 사용자 ID로 변경
+
         Pageable pageable = PageRequest.of(page, size);
+
         List<Order> orders = orderService.getOrders(userId, pageable);
         List<OrderResponse> orderResponses = orders.stream()
                 .map(orderMapper::toOrderResponse)
                 .collect(Collectors.toList());
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.success(orderResponses));
     }
@@ -52,7 +53,9 @@ public class OrderController {
     @Operation(summary = "주문 취소", description = "특정 주문을 취소합니다. (PENDING 상태만 가능)")
     public ResponseEntity<CommonResponse<Void>> cancelOrder(@PathVariable Long orderId) {
         Long userId = 1L; // TODO: 실제 인증된 사용자 ID로 변경
+
         orderService.cancelOrder(userId, orderId);
+
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(CommonResponse.success());
     }

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -33,57 +34,207 @@ public class StockDataCollectionService {
     private final StockPriceDailyRepository stockPriceDailyRepository;
     
     /**
-     * 활성화된 모든 종목의 1분봉 데이터를 수집합니다.
+     * KOSPI 종목의 1분봉 데이터를 수집합니다.
      */
-    public void collectMinuteData() {
-        List<Stock> activeStocks = stockRepository.findActiveStocks();
+    public void collectKospiMinuteData() {
+        List<Stock> kospiStocks = stockRepository.findActiveStocksByMarketType(ApiConstants.MARKET_TYPE_KOSPI);
         LocalDateTime now = LocalDateTime.now();
         
-        for (Stock stock : activeStocks) {
-            collectMinuteDataForStock(stock.getStockCode(), now);
+        for (Stock stock : kospiStocks) {
+            collectKospiMinuteDataForStock(stock.getStockCode(), now);
             try {
                 Thread.sleep(ApiConstants.API_CALL_INTERVAL);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new DataCollectionException("데이터 수집이 중단되었습니다: " + e.getMessage());
+                throw new DataCollectionException("KOSPI 데이터 수집이 중단되었습니다: " + e.getMessage());
             }
         }
     }
     
     /**
-     * 특정 종목의 1분봉 데이터를 수집합니다.
+     * NASDAQ 종목의 1분봉 데이터를 수집합니다.
      */
-    private void collectMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
-        JsonNode response = stockApiService.getStockCurrentPrice(stockCode);
-        JsonNode output = response.path("output");
+    public void collectNasdaqMinuteData() {
+        List<Stock> nasdaqStocks = stockRepository.findActiveStocksByMarketType(ApiConstants.MARKET_TYPE_NASDAQ);
+        LocalDateTime now = LocalDateTime.now();
         
-        if (output.isMissingNode()) {
-            log.warn("종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
-            return;
+        for (Stock stock : nasdaqStocks) {
+            collectNasdaqMinuteDataForStock(stock.getStockCode(), now);
+            try {
+                Thread.sleep(ApiConstants.API_CALL_INTERVAL);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new DataCollectionException("NASDAQ 데이터 수집이 중단되었습니다: " + e.getMessage());
+            }
         }
-        
-        Long currentPrice = Long.parseLong(output.path("stck_prpr").asText("0"));
-        Long volume = Long.parseLong(output.path("acml_vol").asText("0"));
-        Long amount = Long.parseLong(output.path("acml_tr_pbmn").asText("0"));
-        
-        // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
-        StockPriceMinute minuteData = StockPriceMinute.builder()
-                .stockCode(stockCode)
-                .timestamp(timestamp)
-                .openPrice(currentPrice)
-                .highPrice(currentPrice)
-                .lowPrice(currentPrice)
-                .closePrice(currentPrice)
-                .volume(volume)
-                .amount(amount)
-                .build();
-        
-        // 중복 방지를 위해 기존 데이터 확인
-        Optional<StockPriceMinute> existing = stockPriceMinuteRepository
-                .findByStockCodeAndTimestamp(stockCode, timestamp);
-        
-        if (existing.isEmpty()) {
-            stockPriceMinuteRepository.save(minuteData);
+    }
+    
+    /**
+     * 특정 KOSPI 종목의 1분봉 데이터를 수집합니다.
+     */
+    private void collectKospiMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
+        try {
+            JsonNode response = stockApiService.getStockCurrentPrice(stockCode);
+            JsonNode output = response.path("output");
+            
+            if (output.isMissingNode()) {
+                log.warn("KOSPI 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+                // API 에러 시에도 기본 데이터 저장
+                saveDefaultKospiMinuteData(stockCode, timestamp);
+                return;
+            }
+            
+            // 소수점이 포함된 가격 데이터를 BigDecimal로 파싱
+            BigDecimal currentPrice = parsePriceToBigDecimal(output.path("stck_prpr").asText("0"));
+            Long volume = Long.parseLong(output.path("acml_vol").asText("0"));
+            Long amount = Long.parseLong(output.path("acml_tr_pbmn").asText("0"));
+            
+            // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(currentPrice)
+                    .highPrice(currentPrice)
+                    .lowPrice(currentPrice)
+                    .closePrice(currentPrice)
+                    .volume(volume)
+                    .amount(amount)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+            }
+            
+        } catch (Exception e) {
+            log.error("KOSPI 종목 {} 데이터 수집 실패: {}", stockCode, e.getMessage());
+            // 예외 발생 시에도 기본 데이터 저장
+            saveDefaultKospiMinuteData(stockCode, timestamp);
+        }
+    }
+    
+    /**
+     * 특정 NASDAQ 종목의 1분봉 데이터를 수집합니다.
+     */
+    private void collectNasdaqMinuteDataForStock(String stockCode, LocalDateTime timestamp) {
+        try {
+            JsonNode response = stockApiService.getOverseasStockCurrentPrice(stockCode);
+            JsonNode output = response.path("output");
+            
+            if (output.isMissingNode()) {
+                log.warn("NASDAQ 종목 {}의 현재가 데이터를 가져올 수 없습니다.", stockCode);
+                // API 에러 시에도 기본 데이터 저장
+                saveDefaultMinuteData(stockCode, timestamp);
+                return;
+            }
+            
+            // 해외주식 API 응답 파싱 - 소수점이 포함된 가격 데이터를 BigDecimal로 처리
+            BigDecimal currentPrice = parsePriceToBigDecimal(output.path("last").asText("0"));
+            Long volume = Long.parseLong(output.path("volume").asText("0"));
+            Long amount = Long.parseLong(output.path("amount").asText("0"));
+            
+            // 1분봉 데이터 생성 (OHLC 모두 현재가로 설정)
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(currentPrice)
+                    .highPrice(currentPrice)
+                    .lowPrice(currentPrice)
+                    .closePrice(currentPrice)
+                    .volume(volume)
+                    .amount(amount)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+            }
+            
+        } catch (Exception e) {
+            log.error("NASDAQ 종목 {} 데이터 수집 실패: {}", stockCode, e.getMessage());
+            // 예외 발생 시에도 기본 데이터 저장
+            saveDefaultMinuteData(stockCode, timestamp);
+        }
+    }
+    
+    /**
+     * API 에러 시 기본 1분봉 데이터를 저장하는 헬퍼 메서드
+     */
+    private void saveDefaultMinuteData(String stockCode, LocalDateTime timestamp) {
+        try {
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(BigDecimal.ZERO)
+                    .highPrice(BigDecimal.ZERO)
+                    .lowPrice(BigDecimal.ZERO)
+                    .closePrice(BigDecimal.ZERO)
+                    .volume(0L)
+                    .amount(0L)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+                log.info("NASDAQ 종목 {}의 기본 데이터 저장 완료", stockCode);
+            }
+        } catch (Exception e) {
+            log.error("NASDAQ 종목 {} 기본 데이터 저장 실패: {}", stockCode, e.getMessage());
+        }
+    }
+    
+    /**
+     * KOSPI API 에러 시 기본 1분봉 데이터를 저장하는 헬퍼 메서드
+     */
+    private void saveDefaultKospiMinuteData(String stockCode, LocalDateTime timestamp) {
+        try {
+            StockPriceMinute minuteData = StockPriceMinute.builder()
+                    .stockCode(stockCode)
+                    .timestamp(timestamp)
+                    .openPrice(BigDecimal.ZERO)
+                    .highPrice(BigDecimal.ZERO)
+                    .lowPrice(BigDecimal.ZERO)
+                    .closePrice(BigDecimal.ZERO)
+                    .volume(0L)
+                    .amount(0L)
+                    .build();
+            
+            // 중복 방지를 위해 기존 데이터 확인
+            Optional<StockPriceMinute> existing = stockPriceMinuteRepository
+                    .findByStockCodeAndTimestamp(stockCode, timestamp);
+            
+            if (existing.isEmpty()) {
+                stockPriceMinuteRepository.save(minuteData);
+                log.info("KOSPI 종목 {}의 기본 데이터 저장 완료", stockCode);
+            }
+        } catch (Exception e) {
+            log.error("KOSPI 종목 {} 기본 데이터 저장 실패: {}", stockCode, e.getMessage());
+        }
+    }
+    
+    /**
+     * 가격 문자열을 BigDecimal로 변환하는 헬퍼 메서드
+     * 소수점이 포함된 가격 데이터를 정확하게 처리합니다.
+     */
+    private BigDecimal parsePriceToBigDecimal(String priceStr) {
+        try {
+            if (priceStr == null || priceStr.trim().isEmpty() || "0".equals(priceStr)) {
+                return BigDecimal.ZERO;
+            }
+            // BigDecimal로 정확한 소수점 계산
+            return new BigDecimal(priceStr);
+        } catch (NumberFormatException e) {
+            log.warn("가격 파싱 실패: {}, 기본값 0 사용", priceStr);
+            return BigDecimal.ZERO;
         }
     }
     
@@ -114,10 +265,10 @@ public class StockDataCollectionService {
         }
         
         // OHLCV 계산
-        Long openPrice = minuteDataList.get(0).getOpenPrice();
-        Long closePrice = minuteDataList.get(minuteDataList.size() - 1).getClosePrice();
-        Long highPrice = minuteDataList.stream().mapToLong(StockPriceMinute::getHighPrice).max().orElse(0L);
-        Long lowPrice = minuteDataList.stream().mapToLong(StockPriceMinute::getLowPrice).min().orElse(0L);
+        BigDecimal openPrice = minuteDataList.get(0).getOpenPrice();
+        BigDecimal closePrice = minuteDataList.get(minuteDataList.size() - 1).getClosePrice();
+        BigDecimal highPrice = minuteDataList.stream().map(StockPriceMinute::getHighPrice).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        BigDecimal lowPrice = minuteDataList.stream().map(StockPriceMinute::getLowPrice).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
         Long volume = minuteDataList.stream().mapToLong(StockPriceMinute::getVolume).sum();
         Long amount = minuteDataList.stream().mapToLong(StockPriceMinute::getAmount).sum();
         
@@ -168,10 +319,10 @@ public class StockDataCollectionService {
         }
         
         // OHLCV 계산
-        Long openPrice = hourDataList.get(0).getOpenPrice();
-        Long closePrice = hourDataList.get(hourDataList.size() - 1).getClosePrice();
-        Long highPrice = hourDataList.stream().mapToLong(StockPriceHour::getHighPrice).max().orElse(0L);
-        Long lowPrice = hourDataList.stream().mapToLong(StockPriceHour::getLowPrice).min().orElse(0L);
+        BigDecimal openPrice = hourDataList.get(0).getOpenPrice();
+        BigDecimal closePrice = hourDataList.get(hourDataList.size() - 1).getClosePrice();
+        BigDecimal highPrice = hourDataList.stream().map(StockPriceHour::getHighPrice).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        BigDecimal lowPrice = hourDataList.stream().map(StockPriceHour::getLowPrice).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
         Long volume = hourDataList.stream().mapToLong(StockPriceHour::getVolume).sum();
         Long amount = hourDataList.stream().mapToLong(StockPriceHour::getAmount).sum();
         

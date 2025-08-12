@@ -1,15 +1,17 @@
 spring:
-  config:
-    import: optional:file:.env[.properties]
-
   application:
     name: session
+  profiles:
+    active: dev
 
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/database}
-    username: sa
-    password: 1234
-    driver-class-name: org.postgresql.Driver
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+      write-dates-with-zone-id: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
 
   jpa:
     hibernate:
@@ -20,10 +22,6 @@ spring:
         highlight_sql: true
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  redis:
-    host: redis
-    port: 6379
 
 management:
   endpoints:
@@ -75,12 +73,6 @@ management.metrics.enable:
   hikaricp: true
 
 kis:
-  app-key: ${KS_APP_KEY}
-  app-secret: ${KS_APP_SECRET}
-  account-number: ${KS_ACCOUNT_NUMBER}
-  account-product-code: ${KS_ACCOUNT_PRODUCT_CODE}
   grant-type: client_credentials
   scope: oob
-  base-url: https://openapi.koreainvestment.com:9443
-  sandbox-url: https://openapivts.koreainvestment.com:29443
   token-expiration-minutes: 59

@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.AllArgsConstructor;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,8 +38,8 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private Long quantity;
 
-    @Column(nullable = false)
-    private Long price; // 지정가
+    @Column(nullable = false, precision = 15, scale = 4)
+    private BigDecimal price; // 지정가
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

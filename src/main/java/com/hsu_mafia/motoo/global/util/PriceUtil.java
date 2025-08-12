@@ -14,8 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 @Component
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class PriceUtil {
     /**
      * 종목의 현재가를 반환합니다 (최신 1분봉 데이터 기준)
      */
-    public Long getCurrentPrice(String stockCode) {
+    public BigDecimal getCurrentPrice(String stockCode) {
         Optional<StockPriceMinute> latestMinute = stockPriceMinuteRepository
                 .findTopByStockCodeOrderByTimestampDesc(stockCode);
         
@@ -58,21 +58,21 @@ public class PriceUtil {
         Optional<StockPriceDaily> latestDaily = stockPriceDailyRepository
                 .findTopByStockCodeOrderByDateDesc(stockCode);
         
-        return latestDaily.map(StockPriceDaily::getClosePrice).orElse(0L);
+        return latestDaily.map(StockPriceDaily::getClosePrice).orElse(BigDecimal.ZERO);
     }
 
     /**
      * 종목의 전일 대비 가격 변동을 반환합니다
      */
     public String getPriceDifference(String stockCode) {
-        Long currentPrice = getCurrentPrice(stockCode);
-        Long previousPrice = getPreviousDayClosePrice(stockCode);
+        BigDecimal currentPrice = getCurrentPrice(stockCode);
+        BigDecimal previousPrice = getPreviousDayClosePrice(stockCode);
         
-        if (previousPrice == 0L) {
+        if (previousPrice.compareTo(BigDecimal.ZERO) == 0) {
             return "0";
         }
         
-        long difference = currentPrice - previousPrice;
+        BigDecimal difference = currentPrice.subtract(previousPrice);
         return String.valueOf(difference);
     }
 
@@ -80,14 +80,14 @@ public class PriceUtil {
      * 종목의 전일 대비 등락률을 반환합니다
      */
     public String getRateDifference(String stockCode) {
-        Long currentPrice = getCurrentPrice(stockCode);
-        Long previousPrice = getPreviousDayClosePrice(stockCode);
+        BigDecimal currentPrice = getCurrentPrice(stockCode);
+        BigDecimal previousPrice = getPreviousDayClosePrice(stockCode);
         
-        if (previousPrice == 0L) {
+        if (previousPrice.compareTo(BigDecimal.ZERO) == 0) {
             return "0.00";
         }
         
-        double rate = ((double) (currentPrice - previousPrice) / previousPrice) * 100;
+        double rate = ((double) (currentPrice.subtract(previousPrice).doubleValue()) / previousPrice.doubleValue()) * 100;
         return String.format("%.2f", rate);
     }
 
@@ -120,33 +120,33 @@ public class PriceUtil {
     /**
      * 종목의 52주 최저가를 반환합니다 (최근 1년간의 1일봉 데이터 기준)
      */
-    public Integer getMin52(String stockCode) {
+    public BigDecimal getMin52(String stockCode) {
         LocalDate oneYearAgo = LocalDate.now().minusYears(1);
         
         Optional<StockPriceDaily> minPrice = stockPriceDailyRepository
                 .findTopByStockCodeAndDateGreaterThanEqualOrderByLowPriceAsc(stockCode, oneYearAgo);
         
-        return minPrice.map(daily -> daily.getLowPrice().intValue()).orElse(0);
+        return minPrice.map(StockPriceDaily::getLowPrice).orElse(BigDecimal.ZERO);
     }
 
     /**
      * 종목의 52주 최고가를 반환합니다 (최근 1년간의 1일봉 데이터 기준)
      */
-    public Integer getMax52(String stockCode) {
+    public BigDecimal getMax52(String stockCode) {
         LocalDate oneYearAgo = LocalDate.now().minusYears(1);
         
         Optional<StockPriceDaily> maxPrice = stockPriceDailyRepository
                 .findTopByStockCodeAndDateGreaterThanEqualOrderByHighPriceDesc(stockCode, oneYearAgo);
         
-        return maxPrice.map(daily -> daily.getHighPrice().intValue()).orElse(0);
+        return maxPrice.map(StockPriceDaily::getHighPrice).orElse(BigDecimal.ZERO);
     }
 
     /**
      * 종목의 PER(주가수익비율)을 반환합니다
      */
     public String getPer(String stockCode) {
-        Long currentPrice = getCurrentPrice(stockCode);
-        if (currentPrice == 0L) {
+        BigDecimal currentPrice = getCurrentPrice(stockCode);
+        if (currentPrice.compareTo(BigDecimal.ZERO) == 0) {
             return "N/A";
         }
         
@@ -155,7 +155,7 @@ public class PriceUtil {
         
         if (latestFinancial.isPresent()) {
             FinancialStatement financial = latestFinancial.get();
-            financial.calculatePer(currentPrice);
+            financial.calculatePer(currentPrice.doubleValue());
             
             if (financial.getPer() != null && financial.getPer() > 0) {
                 return String.format("%.2f", financial.getPer());
@@ -169,8 +169,8 @@ public class PriceUtil {
      * 종목의 PBR(주가순자산비율)을 반환합니다
      */
     public String getPbr(String stockCode) {
-        Long currentPrice = getCurrentPrice(stockCode);
-        if (currentPrice == 0L) {
+        BigDecimal currentPrice = getCurrentPrice(stockCode);
+        if (currentPrice.compareTo(BigDecimal.ZERO) == 0) {
             return "N/A";
         }
         
@@ -179,7 +179,7 @@ public class PriceUtil {
         
         if (latestFinancial.isPresent()) {
             FinancialStatement financial = latestFinancial.get();
-            financial.calculatePbr(currentPrice);
+            financial.calculatePbr(currentPrice.doubleValue());
             
             if (financial.getPbr() != null && financial.getPbr() > 0) {
                 return String.format("%.2f", financial.getPbr());
@@ -192,12 +192,12 @@ public class PriceUtil {
     /**
      * 전일 종가를 조회합니다
      */
-    private Long getPreviousDayClosePrice(String stockCode) {
+    private BigDecimal getPreviousDayClosePrice(String stockCode) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         
         Optional<StockPriceDaily> previousDay = stockPriceDailyRepository
                 .findByStockCodeAndDate(stockCode, yesterday);
         
-        return previousDay.map(StockPriceDaily::getClosePrice).orElse(0L);
+        return previousDay.map(StockPriceDaily::getClosePrice).orElse(BigDecimal.ZERO);
     }
 }

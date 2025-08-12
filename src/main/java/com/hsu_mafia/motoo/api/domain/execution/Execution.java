@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.AllArgsConstructor;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,8 +38,8 @@ public class Execution extends BaseEntity {
     @Column(nullable = false)
     private Long quantity;
 
-    @Column(nullable = false)
-    private Long executedPrice;
+    @Column(nullable = false, precision = 15, scale = 4)
+    private BigDecimal executedPrice;
 
     @Column(nullable = false)
     private LocalDateTime executedAt;

@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://db:5432/database}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+
+kis:
+  app-key: ${KS_APP_KEY}
+  app-secret: ${KS_APP_SECRET}
+  account-number: ${KS_ACCOUNT_NUMBER}
+  account-product-code: ${KS_ACCOUNT_PRODUCT_CODE}

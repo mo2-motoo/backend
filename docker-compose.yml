@@ -38,6 +38,8 @@ services:
     image: redis:7
     container_name: redis
     restart: always
+    ports:
+      - "6379:6379"
     command:
       [
         "redis-server",
@@ -56,6 +58,18 @@ services:
       - monitoring-network
       - logging-network
 
+  redis-cli:
+    image: redis:7
+    container_name: redis-cli
+    depends_on:
+      - redis
+    networks:
+      - backend
+      - monitoring-network
+    command: ["tail", "-f", "/dev/null"] # 컨테이너를 계속 실행 상태로 유지
+    volumes:
+      - ./redis-scripts:/scripts # Redis 스크립트 디렉토리 마운트
+
   backend:
     build:
       context: .
@@ -72,7 +86,9 @@ services:
       - logging-network
     restart: unless-stopped
     env_file:
-      - .env
+      - docker.env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
 
 volumes:
   postgres_data:

@@ -1,5 +1,6 @@
 package com.hsu_mafia.motoo.api.domain.order;
 
+import com.hsu_mafia.motoo.api.domain.execution.OrderExecutionService;
 import com.hsu_mafia.motoo.api.domain.stock.Stock;
 import com.hsu_mafia.motoo.api.domain.stock.StockRepository;
 import com.hsu_mafia.motoo.api.domain.user.User;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
     private final UserStockRepository userStockRepository;
+    private final OrderExecutionService orderExecutionService;
 
     @Transactional
     public void placeOrder(Long userId, OrderRequest request) {
@@ -39,8 +42,8 @@ public class OrderService {
 
         // 매수 주문인 경우 현금 확인
         if (request.getOrderType() == OrderType.BUY) {
-            Long requiredAmount = request.getPrice() * request.getQuantity();
-            if (user.getCash() < requiredAmount) {
+            BigDecimal requiredAmount = request.getPrice().multiply(new BigDecimal(request.getQuantity()));
+            if (user.getCash() < requiredAmount.longValue()) {
                 throw new BaseException(ErrorCode.INSUFFICIENT_CASH);
             }
         }
@@ -64,6 +67,9 @@ public class OrderService {
                 .build();
 
         orderRepository.save(order);
+        
+        // Redis Queue에 주문 추가
+        orderExecutionService.addOrderToQueue(order);
     }
 
     public List<Order> getOrders(Long userId, Pageable pageable) {

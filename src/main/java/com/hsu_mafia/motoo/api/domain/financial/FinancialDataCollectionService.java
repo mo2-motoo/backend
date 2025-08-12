@@ -52,19 +52,7 @@ public class FinancialDataCollectionService {
         collectAnnualFinancialData(stockCode);
     }
     
-    /**
-     * 특정 종목의 분기별 재무제표 데이터를 수집합니다.
-     */
-    public void collectQuarterlyFinancialDataForStock(String stockCode) {
-        collectQuarterlyFinancialData(stockCode);
-    }
-    
-    /**
-     * 특정 종목의 연간 재무제표 데이터를 수집합니다.
-     */
-    public void collectAnnualFinancialDataForStock(String stockCode) {
-        collectAnnualFinancialData(stockCode);
-    }
+
     
     /**
      * 분기별 재무제표 데이터를 수집합니다.

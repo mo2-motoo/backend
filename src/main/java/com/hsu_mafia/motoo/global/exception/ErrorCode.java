@@ -18,6 +18,9 @@ public enum ErrorCode {
     INSUFFICIENT_CASH("보유 현금이 부족합니다.", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_STOCK("보유 주식이 부족합니다.", HttpStatus.BAD_REQUEST),
     
+    // 거래내역 관련
+    TRANSACTION_DATE_RANGE_TOO_LONG("거래내역 조회 기간은 최대 6개월까지 가능합니다.", HttpStatus.BAD_REQUEST),
+    
     // 일반
     INVALID_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

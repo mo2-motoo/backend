@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,14 +15,14 @@ public class StockResponse {
     private String stockId;
     private String stockName;
     private String outline;
-    private Long currentPrice;
+    private BigDecimal currentPrice;
     private String marketType;
     private String industryName;
     private String priceDifference;
     private String rateDifference;
     private Long tradingVolume;
-    private Integer min52;
-    private Integer max52;
+    private BigDecimal min52;
+    private BigDecimal max52;
     private String per;
     private String pbr;
 } 

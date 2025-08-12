@@ -3,14 +3,17 @@ package com.hsu_mafia.motoo.api.domain.stockprice;
 import com.hsu_mafia.motoo.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "stock_price_minute")
 @Getter
+@Setter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @IdClass(StockPriceMinuteId.class)
 public class StockPriceMinute extends BaseEntity {
@@ -23,17 +26,17 @@ public class StockPriceMinute extends BaseEntity {
     @Column(name = "timestamp")
     private LocalDateTime timestamp;
     
-    @Column(name = "open_price", nullable = false)
-    private Long openPrice;
+    @Column(name = "open_price", nullable = false, precision = 15, scale = 4)
+    private BigDecimal openPrice;
     
-    @Column(name = "high_price", nullable = false)
-    private Long highPrice;
+    @Column(name = "high_price", nullable = false, precision = 15, scale = 4)
+    private BigDecimal highPrice;
     
-    @Column(name = "low_price", nullable = false)
-    private Long lowPrice;
+    @Column(name = "low_price", nullable = false, precision = 15, scale = 4)
+    private BigDecimal lowPrice;
     
-    @Column(name = "close_price", nullable = false)
-    private Long closePrice;
+    @Column(name = "close_price", nullable = false, precision = 15, scale = 4)
+    private BigDecimal closePrice;
     
     @Column(name = "volume", nullable = false)
     private Long volume;
@@ -43,7 +46,7 @@ public class StockPriceMinute extends BaseEntity {
     
     @Builder
     public StockPriceMinute(String stockCode, LocalDateTime timestamp, 
-                           Long openPrice, Long highPrice, Long lowPrice, Long closePrice,
+                           BigDecimal openPrice, BigDecimal highPrice, BigDecimal lowPrice, BigDecimal closePrice,
                            Long volume, Long amount) {
         this.stockCode = stockCode;
         this.timestamp = timestamp;
