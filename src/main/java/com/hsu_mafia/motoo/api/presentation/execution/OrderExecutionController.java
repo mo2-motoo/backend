@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Tag(name = "Order Execution", description = "주문 체결 관리 API")
 @RestController
-@RequestMapping("/api/order-execution")
+@RequestMapping("/api/v1/order-execution")
 @RequiredArgsConstructor
 public class OrderExecutionController {
     

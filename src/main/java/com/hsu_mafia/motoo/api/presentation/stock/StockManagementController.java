@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stock-management")
+@RequestMapping("/api/v1/stock-management")
 @RequiredArgsConstructor
 @Tag(name = "Stock Management", description = "주식 종목 관리 및 데이터 수집 API")
 public class StockManagementController {

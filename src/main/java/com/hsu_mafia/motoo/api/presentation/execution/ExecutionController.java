@@ -21,7 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RestController
-@RequestMapping("/api/executions")
+@RequestMapping("/api/v1/executions")
 @RequiredArgsConstructor
 @Tag(name = "Execution", description = "체결 내역 관련 API")
 public class ExecutionController {

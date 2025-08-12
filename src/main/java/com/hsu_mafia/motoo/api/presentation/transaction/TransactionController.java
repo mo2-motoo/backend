@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Tag(name = "Transaction", description = "거래내역 API")
 @RestController
-@RequestMapping("/api/transactions")
+@RequestMapping("/api/v1/transactions")
 @RequiredArgsConstructor
 public class TransactionController {
     

@@ -20,7 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RestController
-@RequestMapping("/api/stocks")
+@RequestMapping("/api/v1/stocks")
 @RequiredArgsConstructor
 @Tag(name = "Stock", description = "주식 관련 API")
 public class StockController {
